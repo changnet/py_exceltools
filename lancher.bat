@@ -1,4 +1,5 @@
 @echo off
 
-python xls2lua.py --input xls/ --output lua/
+python loader.py --input ./ --srv server/ --clt client/ --timeout -1 --suffix xls
+
 pause
