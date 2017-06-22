@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import os
-import xlrd
+import openpyxl
 
 from optparse import OptionParser
 
@@ -11,149 +11,35 @@ try:
 except NameError:
     basestring = str
 
-START_ROW = 2
-
-def convertToStr(_value):
-    if not isinstance(_value,basestring):
-        if _value == int(_value):    #将excel中的float改为int
-            _value = int(_value)
-
-        return str(_value)
-
-    #因为生成的是代码，如果是字符串，得加''
-    return '\'' + _value.strip( ' ' ) + '\''  #去除左右空格(仅半角)
-
-class XLSDoc:
-
-    def __init__(self, input_path, output_path):
-        self.inputPath = input_path
-        self.outputPath = output_path
-        self.errors = 0
-        self.warns  = 0
-
-    def readDoc(self, fileName):
-        doc = xlrd.open_workbook(self.inputPath + fileName)
-        #for i in range(doc.nsheets):  #现在只取sheet1
-        baseName = os.path.splitext(fileName)[0]  #去除后缀
-        sheet = Sheet(fileName)
-        sheet_obj = doc.sheet_by_name('Sheet1')
-        sheet.readSheet(sheet_obj)
-        content = sheet.toLua()
-
-        self.outPutToLua(baseName,content)
-        self.errors += sheet.get_errors()
-        self.warns  += sheet.get_warns()
-
-        sheet.done()
-
-    def outPutToLua(self,fileName,content):
-        #必须为wb，不然无法写入utf-8
-        luaFile = open(self.outputPath + fileName + '.lua', 'wb')
-        luaFile.write(content.encode("utf-8"))
-        luaFile.close()
-
-    def done(self):
-        print("all done... %d error %d warn" % (self.errors,self.warns))
-
-    def attention(self):
-        print("********xls文件转lua********")
-        print("**第一行必须为key")
-        print("**第二行为注释")
-        print("**第一列为主键，不可重复")
-        print("**类型取决于单元格类型")
-        print("***************************\n")
+TYPE_ROW = 1
+SRV_ROW  = 2
+CLT_ROW  = 3
 
 class Sheet:
 
-    def __init__(self, fileName):
-        self.sheetName = ""
-        self.luaTable  = []
-        self.keyName   = []    #key名字
-        self.fileName  = fileName
+    def __init__(self,base_name):
+        self.base_name = base_name
         self.errors = 0
         self.warns  = 0
 
-    def get_warns(self):
-        return self.warns
+    def decode_sheet(self,wb_sheet):
+        print( "    decoding %s" % wb_sheet.title )
+        print( wb_sheet.cell(row=1, column=2).value )
+        # 空的时候，wb_sheet.cell(row=1, column=2).value == None
 
-    def get_errors(self):
-        return self.errors
+class ExcelDoc:
 
-    def readKeyRow(self,sheetObj):
-        #self.keyName   = sheetObj.row(0)这样取值会是[text:'xxx']
-        row = 0              #第一行是key值
-        for i in range(sheetObj.ncols):
-            ty = sheetObj.cell_type( row,i )
-            if xlrd.XL_CELL_ERROR == ty:
-                print("error:read cloumn key fail,file %s,row %d,column %d\n" % (self.fileName,row+1,i+1))
-                self.errors += 1
-            elif xlrd.XL_CELL_EMPTY == ty or xlrd.XL_CELL_BLANK == ty:
-                #key不忽略空,防止数组越界，策划在空key上填写值就是自找苦吃
-                print("warning:empty key cell,file %s,row %d,column %d\n" % (self.fileName,row+1,i+1))
-                self.keyName.append("")
-                self.warns += 1
-            else:
-                self.keyName.append( convertToStr(sheetObj.cell_value(0,i)) )
+    def __init__(self, file):
+        self.file = file
+        self.errors = 0
+        self.warns  = 0
 
-    def readSheet(self, sheetObj):
-        self.sheetName = sheetObj.name
-        self.readKeyRow(sheetObj)
+    def decode(self):
+        print( "start decode %s ..." % self.file )
+        base_name = os.path.splitext( self.file )[0]  #去除后缀
 
-        for i in range(START_ROW, sheetObj.nrows):#第二行是注释
-            self.encodeLuaTable(i,sheetObj)
+        wb = openpyxl.load_workbook( self.file )
 
-    def done(self):
-        baseName = os.path.splitext(self.fileName)[0]
-        print("convert %-20s to %-20s .... done,%d error %d warn" % (self.fileName,baseName + ".lua",self.errors,self.warns))
-
-    def encodeLuaTable(self,row,sheetObj):
-        strIndent = "    "    #缩进
-        strTable = strIndent + '[' + convertToStr(sheetObj.cell_value(row,0)) + '] = \n'
-        strTable += strIndent + '{\n'
-
-        #所有字段都只是字符串
-        for i in range(sheetObj.ncols):
-
-            ty = sheetObj.cell_type( row,i )
-            if xlrd.XL_CELL_ERROR == ty:
-                self.errors += 1
-                print("error cell,file %s,row %d,column %d\n" % (self.fileName,row+1,i+1))
-            elif xlrd.XL_CELL_EMPTY == ty or xlrd.XL_CELL_BLANK == ty:
-                continue    #忽略空
-            elif "" == self.keyName[i]:
-                print("warning,empty key dectect!!!,file %s,row %d,column %d\n" % (self.fileName,row+1,i+1))
-                self.warns += 1
-            else:
-                row_v = sheetObj.cell_value(row,i)
-                if "" == row_v:
-                    continue    #当一个空格子里只有公式时，会导出一个空串
-                strTable += strIndent + strIndent + '['\
-                    + self.keyName[i] + '] = '\
-                    + convertToStr( row_v ) + ',\n'
-
-        strTable += strIndent + '},\n\n'
-        self.luaTable.append(strTable)
-
-
-    def toLua(self):
-        strLua = self.docComment()
-        strLua += 'return \n'
-        strLua += '{\n'
-
-        for luaTable in self.luaTable:
-            strLua += luaTable
-
-        strLua += '}\n'
-
-        return strLua
-
-    def docComment(self):
-        baseName = os.path.splitext(self.fileName)[0]
-        comment = '--[[\n'
-        comment += 'Do NOT MODITY!  Auto generated by xls2lua\n'
-        comment += 'https://www.python.org/\n'
-        comment += 'http://www.python-excel.org/\n'
-        comment += ']]\n\n'
-        comment += '-- from ' + self.fileName + ' to ' + baseName + '.lua\n'
-        return comment
-
+        for wb_sheet in wb.worksheets:
+            sheet = Sheet( base_name )
+            sheet.decode_sheet( wb_sheet )

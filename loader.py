@@ -2,8 +2,11 @@
 # -*- coding:utf-8 -*-
 
 import os
+import time
 import importlib
 from optparse import OptionParser
+
+from decoder import ExcelDoc
 
 try:
     basestring
@@ -29,25 +32,35 @@ class Loader:
 
     def attention(self):
         print("********excel转换********")
-        print("**第一行为数据类型，支持number、string、json")
-        print("**第二行为server字段名，可为空")
-        print("**第三行为client字段名，可为空")
+        print("**第一行为数据类型，支持int、number、int64、string、json")
+        print("**第二行为server字段名，为空则不导出该字段")
+        print("**第三行为client字段名，为空则不导出该字段")
         print("**第一列为主键，不可重复。可以为字符串，为空则转换为数组")
         print("***************************************************\n")
 
+    def can_load(self,file):
+        if not os.path.isfile( file ): return False
+        if "" != self.suffix and not file.endswith( self.suffix ): return False
+
+        if self.timeout > 0:
+            now = time.time()
+            mtime = os.path.getmtime( file )
+
+            if now - mtime > self.timeout: return False
+
+        return True
+
     def load(self):
-        print("load %s files from %s within %d seconds" 
+        print("load %s files from %s modified within %d seconds" 
             % (self.suffix,self.input_path,self.timeout))
 
-        suffix = "." + self.suffix
         file_list = os.listdir( options.input_path )
         for file in file_list:
-            if ( os.path.isfile( file ) and 
-            ("" == self.suffix or file.endswith( suffix )) ):
-                self.load_one( file )
+            if self.can_load( file ):self.load_one( file )
     
     def load_one(self,file):
-        print( file )
+        doc = ExcelDoc( file )
+        doc.decode()
 
 if __name__ == '__main__':
 
@@ -73,4 +86,5 @@ if __name__ == '__main__':
 
     loader = Loader( options.input_path,
         options.srv_path,options.clt_path,options.timeout,options.suffix )
+    loader.attention()
     loader.load()
