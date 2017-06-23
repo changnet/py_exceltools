@@ -8,28 +8,22 @@ from optparse import OptionParser
 
 from decoder import ExcelDoc
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
 class Loader:
     # @input_path:excel文件所在目录
     # @srv_path  :server输出目录
     # @clt_path  :客户端输出目录
     # @timeout   :只处理文档最后更改时间在N秒内的文档
     # @suffix    :excel文件后缀
-    def __init__(self,input_path,srv_path,clt_path,timeout,suffix,writer):
+    def __init__(self,input_path,
+        srv_path,clt_path,timeout,suffix,srv_writer,clt_writer):
         self.input_path = input_path
         self.srv_path   = srv_path
         self.clt_path   = clt_path
         self.timeout    = timeout
         self.suffix     = suffix
 
-        self.writer = importlib.import_module( "writer_lua" )
-
-    def done(self):
-        print("all done... %d error %d warning" % (self.errors,self.warns))
+        self.srv_writer = importlib.import_module( "writer_" + srv_writer )
+        self.clt_writer = importlib.import_module( "writer_" + clt_writer )
 
     def attention(self):
         print("********excel转换********")
@@ -57,13 +51,18 @@ class Loader:
         print("load %s files from %s modified in the last %d seconds" 
             % (self.suffix,self.input_path,self.timeout))
 
+        if not os.path.exists( self.srv_path ) : os.makedirs( self.srv_path )
+        if not os.path.exists( self.clt_path ) : os.makedirs( self.clt_path )
+        now = time.time()
         file_list = os.listdir( options.input_path )
         for file in file_list:
             if self.can_load( file ):self.load_one( file )
+        print( "load done,%d second elapsed" % ( time.time() - now ) )
     
     def load_one(self,file):
         doc = ExcelDoc( file )
-        doc.decode( self.srv_path,self.clt_path,self.writer.Writer )
+        doc.decode( self.srv_path,
+            self.clt_path,self.srv_writer,self.clt_writer )
 
 if __name__ == '__main__':
 
@@ -84,13 +83,16 @@ if __name__ == '__main__':
     parser.add_option( "-f", "--suffix", dest="suffix",
                      default="",
                      help="what type of file will be loaded.empty mean all files" )
-    parser.add_option( "-w", "--writer", dest="writer",
+    parser.add_option( "-m","--swriter", dest="srv_writer",
                      default="lua",
-                     help="which writer you wish to use:lua xml json" )
+                     help="which server writer you wish to use:lua xml json" )
+    parser.add_option( "-n","--cwriter", dest="clt_writer",
+                     default="lua",
+                     help="which client writer you wish to use:lua xml json" )
 
     options, args = parser.parse_args()
 
-    loader = Loader( options.input_path,options.srv_path,
-        options.clt_path,options.timeout,options.suffix,options.writer )
+    loader = Loader( options.input_path,options.srv_path,options.clt_path,
+        options.timeout,options.suffix,options.srv_writer,options.clt_writer )
     loader.attention()
     loader.load()

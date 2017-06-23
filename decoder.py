@@ -2,15 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import os
-import sys
 import openpyxl
-
-from optparse import OptionParser
-
-try:
-    basestring
-except NameError:
-    basestring = str
 
 TYPE_ROW = 1
 SRV_ROW  = 2
@@ -65,20 +57,19 @@ class Sheet:
             self.rows.append( column_values )
 
     def write_one_file(self,fields,base_path,writer):
-        wt = writer( self.types,fields,self.rows )
+        wt = writer.Writer( self.types,fields,self.rows )
         ctx = wt.content()
         suffix = wt.suffix()
 
         #必须为wb，不然无法写入utf-8
-        if not os.path.exists( base_path ) : os.makedirs( base_path )
         path = base_path + self.base_name + "_" + self.wb_sheet.title + suffix
         file = open( path, 'wb' )
         file.write( ctx.encode( "utf-8" ) )
         file.close()
 
-    def write_files(self,srv_path,clt_path,writer):
-        self.write_one_file( self.srv_fields,srv_path,writer )
-        self.write_one_file( self.clt_fields,clt_path,writer )
+    def write_files(self,srv_path,clt_path,srv_writer,clt_writer):
+        self.write_one_file( self.srv_fields,srv_path,srv_writer )
+        self.write_one_file( self.clt_fields,clt_path,clt_writer )
 
     def decode_sheet(self):
         wb_sheet = self.wb_sheet
@@ -106,7 +97,7 @@ class ExcelDoc:
     def __init__(self, file):
         self.file = file
 
-    def decode(self,srv_path,clt_path,writer):
+    def decode(self,srv_path,clt_path,srv_writer,clt_writer):
         print( "start decode %s ..." % self.file )
 
         base_name = os.path.splitext( self.file )[0]  #去除后缀
@@ -115,4 +106,4 @@ class ExcelDoc:
         for wb_sheet in wb.worksheets:
             sheet = Sheet( base_name,wb_sheet )
             if sheet.decode_sheet():
-                sheet.write_files( srv_path,clt_path,writer )
+                sheet.write_files( srv_path,clt_path,srv_writer,clt_writer )
