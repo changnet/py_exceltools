@@ -47,11 +47,12 @@ class Sheet:
 
     def decode_field(self,fields,row_index):
         for col_index in range( KEY_COL,len( self.types ) + 1 ):
-            value = self.wb_sheet.cell( row = row_index, column = col_index ).value
+            value = self.wb_sheet.cell( 
+                row = row_index, column = col_index ).value
 
             # 对于不需要导出的field，可以为空。即value为None
             fields.append( value )
-    
+
     def decode_cell(self):
         for row_index in range( CLT_ROW + 1,self.wb_sheet.max_row + 1 ):
             column_values = []
@@ -64,7 +65,7 @@ class Sheet:
             self.rows.append( column_values )
 
     def write_one_file(self,fields,base_path,writer):
-        wt = writer( self.types,self.srv_fields,self.rows )
+        wt = writer( self.types,fields,self.rows )
         ctx = wt.content()
         suffix = wt.suffix()
 

@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import os
+import json
 from datetime import datetime
 
 try:
@@ -9,8 +10,7 @@ try:
 except NameError:
     basestring = str
 
-INDENT = ["","    ","        ","            ","                ",
-    "                   ","                 "]
+BASE_INDENT = "    "
 
 class Writer:
 
@@ -18,9 +18,19 @@ class Writer:
         self.types  = types
         self.fields = fields
         self.rows   = rows
+        self.indent = {}
 
     def suffix(self):
         return ".lua"
+
+    def indent_ctx( self,indent ):
+        if indent <= 0: return ""
+
+        if indent not in self.indent:
+            ctx = BASE_INDENT*indent
+            self.indent[indent] = ctx
+
+        return self.indent[indent]
 
     def is_int(s):
         try: 
@@ -38,8 +48,17 @@ class Writer:
         comment += ']]\n\n'
         comment += '-- At ' + now.strftime('%Y-%m-%d %H:%M:%S') + '\n\n'
         return comment
-    
-    def value_to_str(self,value_type,value):
+
+    def json_ctx(self,value,indent):
+        json_obj = json.loads( value )
+        print( type(json_obj) )
+
+        ctx = value
+        indent_str = self.indent_ctx( indent )
+        next_indent_str = self.indent_ctx( indent + 1 )
+        return "\n" + indent_str + "{\n" + next_indent_str + ctx + "\n" + indent_str + "}"
+
+    def value_to_str(self,value_type,value,indent):
         if "int" == value_type :
             return str( int( value ) )
         elif "int64" == value_type :
@@ -52,34 +71,36 @@ class Writer:
         elif "string" == value_type :
             return "'" + value + "'"
         elif "json" == value_type :
-            return value
+            return self.json_ctx( value,indent )
         else :
             raise Exception( "invalid type",value_type )
 
-    def pair_to_str(self,field_name,value_type,value):
+    def pair_to_str(self,field_name,value_type,value,indent):
         pair_str = "['" + field_name + "'] = "
-        pair_str += self.value_to_str( value_type,value ) + ",\n"
+        pair_str += self.value_to_str( value_type,value,indent ) + ",\n"
 
-        return pair_str
+        indent_str = self.indent_ctx( indent )
+        return indent_str + pair_str
 
     def column_ctx(self,values,indent):
         key = ""
         # key可能为空
         if None != self.types[0] and None != values[0] :
-            key = INDENT[indent - 1] + "[" + \
-                self.value_to_str( self.types[0],values[0] ) + "] =\n"
+            indent_str = self.indent_ctx( indent - 1 )
+            key = indent_str + "[" + \
+                self.value_to_str( self.types[0],values[0],indent ) + "] =\n"
 
         ctx = ""
         for index in range( 1,len( values ) ):
             if self.fields[index] :
-                ctx += INDENT[indent] + self.pair_to_str( 
-                    self.fields[index],self.types[index],values[index] )
+                ctx += self.pair_to_str( 
+                    self.fields[index],self.types[index],values[index],indent )
 
         return key, ctx
 
     def row_ctx(self):
         ctx = ""
-        indent_str = INDENT[1]
+        indent_str = self.indent_ctx( 1 )
         for column_values in self.rows :
             key,col_ctx = self.column_ctx( column_values,2 )
 
