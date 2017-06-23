@@ -19,13 +19,14 @@ class Loader:
     # @clt_path  :客户端输出目录
     # @timeout   :只处理文档最后更改时间在N秒内的文档
     # @suffix    :excel文件后缀
-    def __init__(self,input_path,srv_path,clt_path,timeout,suffix):
+    def __init__(self,input_path,srv_path,clt_path,timeout,suffix,writer):
         self.input_path = input_path
         self.srv_path   = srv_path
         self.clt_path   = clt_path
         self.timeout    = timeout
         self.suffix     = suffix
-        #importlib.import_module("matplotlib.text")
+
+        self.writer = importlib.import_module( "writer_lua" )
 
     def done(self):
         print("all done... %d error %d warning" % (self.errors,self.warns))
@@ -51,7 +52,7 @@ class Loader:
         return True
 
     def load(self):
-        print("load %s files from %s modified within %d seconds" 
+        print("load %s files from %s modified in the last %d seconds" 
             % (self.suffix,self.input_path,self.timeout))
 
         file_list = os.listdir( options.input_path )
@@ -60,7 +61,7 @@ class Loader:
     
     def load_one(self,file):
         doc = ExcelDoc( file )
-        doc.decode()
+        doc.decode( self.srv_path,self.clt_path,self.writer.Writer )
 
 if __name__ == '__main__':
 
@@ -81,10 +82,13 @@ if __name__ == '__main__':
     parser.add_option( "-f", "--suffix", dest="suffix",
                      default="",
                      help="what type of file will be loaded.empty mean all files" )
+    parser.add_option( "-w", "--writer", dest="writer",
+                     default="lua",
+                     help="which writer you wish to use:lua xml json" )
 
     options, args = parser.parse_args()
 
-    loader = Loader( options.input_path,
-        options.srv_path,options.clt_path,options.timeout,options.suffix )
+    loader = Loader( options.input_path,options.srv_path,
+        options.clt_path,options.timeout,options.suffix,options.writer )
     loader.attention()
     loader.load()

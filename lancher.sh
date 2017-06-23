@@ -1,4 +1,4 @@
 #!/bin/bash
 
-python loader.py --input ./ --srv server/ --clt client/ --timeout -1 --suffix .xlsx
+python loader.py --input ./ --srv server/ --clt client/ --timeout -1 --suffix .xlsx -w lua
 
