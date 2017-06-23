@@ -9,24 +9,25 @@ try:
 except NameError:
     basestring = str
 
-START_ROW = 2
-
-def convertToStr(_value):
-    if not isinstance(_value,basestring):
-        if _value == int(_value):    #将excel中的float改为int
-            _value = int(_value)
-
-        return str(_value)
-
-    #因为生成的是代码，如果是字符串，得加''
-    return '\'' + _value.strip( ' ' ) + '\''  #去除左右空格(仅半角)
+INDENT = ["","    ","        ","            ","                ",
+    "                   ","                 "]
 
 class Writer:
 
-    def __init__(self,types,fields,rows ):
+    def __init__(self,types,fields,rows):
         self.types  = types
         self.fields = fields
         self.rows   = rows
+
+    def suffix(self):
+        return ".lua"
+
+    def is_int(s):
+        try: 
+            int(s)
+            return True
+        except ValueError:
+            return False
 
     def comment(self):
         now = datetime.now()
@@ -35,8 +36,58 @@ class Writer:
         comment += 'https://www.python.org/\n'
         comment += 'http://www.python-excel.org/\n'
         comment += ']]\n\n'
-        comment += '-- from ' + now.strftime('%Y-%m-%d %H:%M:%S') + '\n'
+        comment += '-- At ' + now.strftime('%Y-%m-%d %H:%M:%S') + '\n\n'
         return comment
+    
+    def value_to_str(self,value_type,value):
+        if "int" == value_type :
+            return str( int( value ) )
+        elif "int64" == value_type :
+            # 两次转换保证为数字
+            return str( long( value ) )
+        elif "number" == value_type :
+            # 去除带小数时的小数点，100.0 ==>> 100
+            if long( value ) == float( value ) : return str( long( value ) )
+            return str( float( value ) )
+        elif "string" == value_type :
+            return "'" + value + "'"
+        elif "json" == value_type :
+            return value
+        else :
+            raise Exception( "invalid type",value_type )
 
-    def content():
+    def pair_to_str(self,field_name,value_type,value):
+        pair_str = "['" + field_name + "'] = "
+        pair_str += self.value_to_str( value_type,value ) + ",\n"
+
+        return pair_str
+
+    def column_ctx(self,values,indent):
+        key = ""
+        # key可能为空
+        if None != self.types[0] and None != values[0] :
+            key = INDENT[indent - 1] + "[" + \
+                self.value_to_str( self.types[0],values[0] ) + "] =\n"
+
         ctx = ""
+        for index in range( 1,len( values ) ):
+            if self.fields[index] :
+                ctx += INDENT[indent] + self.pair_to_str( 
+                    self.fields[index],self.types[index],values[index] )
+
+        return key, ctx
+
+    def row_ctx(self):
+        ctx = ""
+        indent_str = INDENT[1]
+        for column_values in self.rows :
+            key,col_ctx = self.column_ctx( column_values,2 )
+
+            ctx += indent_str + key + "{\n" + col_ctx + indent_str + "},\n"
+
+        return ctx
+
+
+    def content(self):
+        ctx = self.comment() + "return \n{\n" + self.row_ctx() + "}"
+        return ctx

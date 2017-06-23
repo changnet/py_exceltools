@@ -99,3 +99,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# test cache directory
+server
+client
