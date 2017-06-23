@@ -17,3 +17,4 @@ A Python library to read/write Excel 2010 xlsx/xlsm files.https://pypi.python.or
 * basestring版本兼容不需要了
 * 考虑用[=[ string ]=]来表示lua中的字符串
 * 目录存在检测放到loader
+* 加上消耗时间统计

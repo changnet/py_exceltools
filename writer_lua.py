@@ -10,6 +10,7 @@ try:
 except NameError:
     basestring = str
 
+BASE_LENGTH = 120
 BASE_INDENT = "    "
 
 class Writer:
@@ -32,13 +33,6 @@ class Writer:
 
         return self.indent[indent]
 
-    def is_int(s):
-        try: 
-            int(s)
-            return True
-        except ValueError:
-            return False
-
     def comment(self):
         now = datetime.now()
         comment = '--[[\n'
@@ -49,38 +43,85 @@ class Writer:
         comment += '-- At ' + now.strftime('%Y-%m-%d %H:%M:%S') + '\n\n'
         return comment
 
-    def json_ctx(self,value,indent):
-        json_obj = json.loads( value )
-        print( type(json_obj) )
-
-        ctx = value
+    def json_ctx(self,json_val,indent):
+        ctx = ""
         indent_str = self.indent_ctx( indent )
         next_indent_str = self.indent_ctx( indent + 1 )
-        return "\n" + indent_str + "{\n" + next_indent_str + ctx + "\n" + indent_str + "}"
+        if isinstance( json_val,dict ):
+            for k,v in json_val.items():
+                key = None
+                new_line,val = self.json_ctx( v,indent + 1 )
+                if new_line :
+                    key = next_indent_str + "['" + str( k ) + "'] =\n"
+                else:
+                    key = next_indent_str + "['" + str( k ) + "'] = "
+                ctx = key + val + ",\n"
+            return True,indent_str + "{\n" + ctx + indent_str + "}"
+        elif isinstance( json_val,list ):
+            val_list = []
+            # 暂时不缩进，因为不知道是否要换行
+            for v in json_val:
+                new_line,val_str = self.json_ctx( v,0 )
+                val_list.append( val_str + "," )
+
+            # 如果内容太少，可以不换行
+            length = 0
+            multi_line = False
+            for val in val_list:
+                curr_len = len( val )
+                if length + curr_len > BASE_LENGTH:
+                    ctx += "\n" + next_indent_str
+                    length = 0
+                    multi_line = True
+                ctx += val
+                length += curr_len
+            
+            if multi_line or len( ctx ) > BASE_LENGTH :
+                return True,indent_str + "{\n" + \
+                    next_indent_str + ctx + indent_str + "\n}"
+            else:
+                return False,"{" + ctx + "}"
+
+        elif isinstance( json_val,int ): 
+            return False,indent_str + str( long( json_val ) )
+        elif isinstance( json_val,basestring ):
+            return False,indent_str + "'" + json_val + "'"
+        elif isinstance( json_val,float ):
+            if long( json_val ) == json_val:
+                return False,indent_str + str( long( json_val ) )
+            return False,indent_str + str( json_val )
+        else:
+            raise Exception( "unknow json type",json_val )
 
     def value_to_str(self,value_type,value,indent):
         if "int" == value_type :
-            return str( int( value ) )
+            return False,str( int( value ) )
         elif "int64" == value_type :
             # 两次转换保证为数字
-            return str( long( value ) )
+            return False,str( long( value ) )
         elif "number" == value_type :
             # 去除带小数时的小数点，100.0 ==>> 100
-            if long( value ) == float( value ) : return str( long( value ) )
-            return str( float( value ) )
+            if long( value ) == float( value ) :
+                return False,str( long( value ) )
+            return False,str( float( value ) )
         elif "string" == value_type :
-            return "'" + value + "'"
+            return False,"'" + value + "'"
         elif "json" == value_type :
-            return self.json_ctx( value,indent )
+            new_line,val_str = self.json_ctx( json.loads( value ),indent )
+            if new_line :
+                return new_line,"\n" + val_str
+            else :
+                return new_line,val_str
         else :
             raise Exception( "invalid type",value_type )
 
     def pair_to_str(self,field_name,value_type,value,indent):
-        pair_str = "['" + field_name + "'] = "
-        pair_str += self.value_to_str( value_type,value,indent ) + ",\n"
+        key_str = "['" + field_name + "'] ="
+        new_line,val_str = self.value_to_str( value_type,value,indent )
+        if not new_line : key_str += " "
 
         indent_str = self.indent_ctx( indent )
-        return indent_str + pair_str
+        return indent_str + key_str + val_str + ",\n"
 
     def column_ctx(self,values,indent):
         key = ""
