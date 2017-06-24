@@ -2,12 +2,16 @@
 # -*- coding:utf-8 -*-
 
 import os
+import error
 import openpyxl
 
 TYPE_ROW = 1
 SRV_ROW  = 2
 CLT_ROW  = 3
 KEY_COL  = 1
+
+SRV_FLAG = "server"
+CLT_FLAG = "client"
 
 TYPES = { "int":1,"number":2,"int64":3,"string":4,"json":5 }
 
@@ -58,7 +62,7 @@ class Sheet:
 
     def write_one_file(self,fields,base_path,writer):
         wt = writer.Writer( self.types,fields,self.rows )
-        ctx = wt.content()
+        ctx = wt.content( self.base_name,self.wb_sheet.title,CLT_ROW )
         suffix = wt.suffix()
 
         #必须为wb，不然无法写入utf-8
@@ -70,6 +74,14 @@ class Sheet:
     def write_files(self,srv_path,clt_path,srv_writer,clt_writer):
         self.write_one_file( self.srv_fields,srv_path,srv_writer )
         self.write_one_file( self.clt_fields,clt_path,clt_writer )
+    
+    def need_decode(self):
+        srv_value = self.wb_sheet.cell( row = SRV_ROW, column = KEY_COL ).value
+        clt_value = self.wb_sheet.cell( row = CLT_ROW, column = KEY_COL ).value
+
+        # 没有这两个标识，说明不是配置表。可能是策划的一些备注说明
+        if SRV_FLAG != srv_value or CLT_FLAG != clt_value: return False
+        return True
 
     def decode_sheet(self):
         wb_sheet = self.wb_sheet
@@ -77,7 +89,12 @@ class Sheet:
             print( "    decode sheet %s nothing to decode,abort" \
             % wb_sheet.title.ljust(24,".") )
             return False
-        
+
+        if not self.need_decode():
+            print( "    decode sheet %s no need to decode,abort" \
+            % wb_sheet.title.ljust(24,".") )
+            return False
+
         self.decode_type()
         if len( self.types ) <= TYPE_ROW:
             print( "    decode sheet %s nothing to decode,abort" \

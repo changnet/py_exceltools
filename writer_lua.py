@@ -2,8 +2,14 @@
 # -*- coding:utf-8 -*-
 
 import os
+import sys
 import json
 from datetime import datetime
+
+from error import raise_ex
+from error import RowError
+from error import SheetError
+from error import ColumnError
 
 try:
     basestring
@@ -125,31 +131,43 @@ class Writer:
 
     def column_ctx(self,values,indent):
         key = ""
-        # key可能为空
-        if None != self.types[0] and None != values[0] :
-            indent_str = self.indent_ctx( indent - 1 )
-            key = indent_str + "[" + \
-                self.value_to_str( self.types[0],values[0],indent ) + "] =\n"
+
+        try:
+            if None != self.types[0] and None != values[0] : # key可能为空
+                indent_str = self.indent_ctx( indent - 1 )
+                key = indent_str + "[" + \
+                    self.value_to_str( self.types[0],values[0],indent ) + "] =\n"
+        except:
+            raise_ex( ColumnError( 0 + 1 ),sys.exc_info()[2] )
 
         ctx = ""
         for index in range( 1,len( values ) ):
-            if self.fields[index] :
-                ctx += self.pair_to_str( 
-                    self.fields[index],self.types[index],values[index],indent )
+            try:
+                # 允许某个字段为空，因为并不是所有行都需要这些字段
+                if self.fields[index] and values[index] :
+                    ctx += self.pair_to_str( self.fields[index],
+                        self.types[index],values[index],indent )
+            except:
+                raise_ex( ColumnError( index + 1 ),sys.exc_info()[2] )
 
         return key, ctx
 
-    def row_ctx(self):
+    def row_ctx(self,CLT_ROW):
         ctx = ""
         indent_str = self.indent_ctx( 1 )
-        for column_values in self.rows :
-            key,col_ctx = self.column_ctx( column_values,2 )
-
-            ctx += indent_str + key + "{\n" + col_ctx + indent_str + "},\n"
+        for row_index,column_values in enumerate( self.rows ) :
+            try:
+                key,col_ctx = self.column_ctx( column_values,2 )
+                ctx += indent_str + key + "{\n" + col_ctx + indent_str + "},\n"
+            except ColumnError as e:
+                raise_ex( RowError( str(e),row_index + 1 + CLT_ROW),sys.exc_info()[2] )
 
         return ctx
 
 
-    def content(self):
-        ctx = self.comment() + "return \n{\n" + self.row_ctx() + "}"
-        return ctx
+    def content(self,doc_name,sheet_name,CLT_ROW):
+        try:
+            ctx = self.comment() + "return \n{\n" + self.row_ctx(CLT_ROW) + "}"
+            return ctx
+        except RowError as e:
+            raise_ex( SheetError( str(e),sheet_name ),sys.exc_info()[2] )

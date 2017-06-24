@@ -83,10 +83,10 @@ if __name__ == '__main__':
     parser.add_option( "-f", "--suffix", dest="suffix",
                      default="",
                      help="what type of file will be loaded.empty mean all files" )
-    parser.add_option( "-m","--swriter", dest="srv_writer",
+    parser.add_option( "-w","--swriter", dest="srv_writer",
                      default="lua",
                      help="which server writer you wish to use:lua xml json" )
-    parser.add_option( "-n","--cwriter", dest="clt_writer",
+    parser.add_option( "-l","--cwriter", dest="clt_writer",
                      default="lua",
                      help="which client writer you wish to use:lua xml json" )
 
