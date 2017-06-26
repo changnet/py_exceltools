@@ -21,6 +21,17 @@ try:
 except NameError:
     long = int
 
+# 在python中，字符串和unicode是不一样的。默认从excel读取的数据都是unicode。
+# str可以通过decode转换为unicode
+# ascii' codec can't encode characters
+def to_unicode_str( val ):
+    if isinstance( val,str ) :
+        return val
+    elif isinstance( val,unicode ) :
+        return val
+    else :
+        return str( val ).decode("utf8")
+
 BASE_LENGTH = 120
 BASE_INDENT = "    "
 
@@ -116,7 +127,7 @@ class Writer:
                 return False,str( long( value ) )
             return False,str( float( value ) )
         elif "string" == value_type :
-            return False,"'" + value + "'"
+            return False,"'" + to_unicode_str( value ) + "'"
         elif "json" == value_type :
             new_line,val_str = self.json_ctx( json.loads( value ),indent )
             if new_line :
