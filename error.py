@@ -28,5 +28,10 @@ class SheetError(Exception):
     def __str__(self):
         return str( (self.message,"sheet:" + str(self.value)) )
 
-def raise_ex(et,trace):
-    raise et,None,trace
+if sys.version_info[0] == 3:
+    def raise_ex(et,trace):
+        if et.__traceback__ is not trace:
+            raise et.with_traceback( trace )
+        raise et
+else:
+    exec( "def raise_ex(et,trace):\n    raise et,None,trace\n" )

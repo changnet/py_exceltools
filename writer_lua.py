@@ -16,6 +16,11 @@ try:
 except NameError:
     basestring = str
 
+try:
+    long
+except NameError:
+    long = int
+
 BASE_LENGTH = 120
 BASE_INDENT = "    "
 

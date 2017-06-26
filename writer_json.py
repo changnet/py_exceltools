@@ -16,6 +16,11 @@ try:
 except NameError:
     basestring = str
 
+try:
+    long
+except NameError:
+    long = int
+
 class Writer:
 
     def __init__(self,types,fields,rows):

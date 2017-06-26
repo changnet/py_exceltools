@@ -1,11 +1,22 @@
 # py_exceltools
-convert excel to lua、xml、json with python
+基于openpyxl的excel转换工具。支持xlsx文件转换为lua、xml、json等配置文件。
+由于解析库从xlrd更换为openpyxl，不再支持xls文件的转换。
 
-# openpyxl
-A Python library to read/write Excel 2010 xlsx/xlsm files.https://pypi.python.org/pypi/openpyxl
-## install
-* apt-get install python-pip
-* pip install openpyxl
+关于openpyxl库：https://pypi.python.org/pypi/openpyxl。
+
+
+## 安装
+
+linux安装  
+
+    apt-get install python-pip
+    pip install openpyxl
+
+
+win安装
+
+    安装python(同时安装pip并添加到Path):https://www.python.org/downloads/windows/
+    安装openpyxl,在cmd中运行:pip install openpyxl
 
 # usage
 * lancher.bat(win) or lancher.sh(linux) to run program
