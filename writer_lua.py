@@ -147,8 +147,8 @@ class Writer:
                 if self.fields[index] and values[index] :
                     ctx += self.pair_to_str( self.fields[index],
                         self.types[index],values[index],indent )
-            except:
-                raise_ex( ColumnError( index + 1 ),sys.exc_info()[2] )
+            except Exception as e:
+                raise_ex( ColumnError( index + 1,e ),sys.exc_info()[2] )
 
         return key, ctx
 

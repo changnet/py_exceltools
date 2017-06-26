@@ -2,11 +2,12 @@ import sys
 
 class ColumnError(Exception):
 
-    def __init__(self,value):
+    def __init__(self,value,what):
+        self.what    = str( what )
         self.value   = value
 
     def __str__(self):
-        return str( "column:" + str(self.value) )
+        return str( self.what + ",column:" + str(self.value) )
 
 
 class RowError(Exception):

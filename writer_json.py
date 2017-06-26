@@ -37,7 +37,7 @@ class Writer:
                 return long( value )
             return float( value )
         elif "string" == value_type :
-            return value.encode('utf-8')
+            return value
         elif "json" == value_type :
             return json.loads( value )
         else :
@@ -59,8 +59,7 @@ class Writer:
                     
                     ctx[key] = val
             except Exception as e:
-                print( e )
-                raise_ex( ColumnError( index + 1 ),sys.exc_info()[2] )
+                raise_ex( ColumnError( index + 1,e ),sys.exc_info()[2] )
 
         return key, ctx
 
@@ -105,6 +104,6 @@ class Writer:
             else :
                 ctx = self.array_ctx( CLT_ROW )
 
-            return json.dumps( ctx,ensure_ascii=False,indent=4,encoding='utf8' )
+            return json.dumps( ctx,ensure_ascii=False,indent=4 )
         except RowError as e:
             raise_ex( SheetError( str(e),sheet_name ),sys.exc_info()[2] )
