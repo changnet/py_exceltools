@@ -37,10 +37,12 @@ BASE_INDENT = "    "
 
 class Writer:
 
-    def __init__(self,types,fields,rows):
-        self.types  = types
-        self.fields = fields
-        self.rows   = rows
+    def __init__(self,doc_name,sheet_name,row_offset,col_offset):
+        self.doc_name   = doc_name
+        self.sheet_name = sheet_name
+        self.row_offset = row_offset
+        self.col_offset = col_offset
+
         self.indent = {}
 
     def suffix(self):
@@ -168,7 +170,7 @@ class Writer:
 
         return key, ctx
 
-    def row_ctx(self,CLT_ROW):
+    def row_ctx(self):
         ctx = ""
         indent_str = self.indent_ctx( 1 )
         for row_index,column_values in enumerate( self.rows ) :
@@ -176,14 +178,36 @@ class Writer:
                 key,col_ctx = self.column_ctx( column_values,2 )
                 ctx += indent_str + key + "{\n" + col_ctx + indent_str + "},\n"
             except ColumnError as e:
-                raise_ex( RowError( str(e),row_index + 1 + CLT_ROW),sys.exc_info()[2] )
+                raise_ex( RowError( 
+                    str(e),row_index + 1 + self.row_offset),sys.exc_info()[2] )
 
         return ctx
 
-
-    def content(self,doc_name,sheet_name,CLT_ROW):
+    def array_content(self,types,fields,rows):
         try:
-            ctx = self.comment() + "return \n{\n" + self.row_ctx(CLT_ROW) + "}"
+            self.types  = types
+            self.fields = fields
+            self.rows   = rows
+            row_ctx = self.row_ctx()
+            ctx = self.comment() + "return\n{\n" + row_ctx + "}"
             return ctx
         except RowError as e:
-            raise_ex( SheetError( str(e),sheet_name ),sys.exc_info()[2] )
+            raise_ex( SheetError( str(e),self.sheet_name ),sys.exc_info()[2] )
+
+    def object_content(self,types,fields,rows):
+        try:
+            self.types  = types
+            self.fields = fields
+            self.rows   = rows
+
+            row_ctx = ""
+            for row_index,value in enumerate( self.rows ) :
+                key = self.fields[row_index]
+                if None != key :
+                    value_type = self.types[row_index]
+                    row_ctx += self.pair_to_str( key,value_type,value,1 )
+
+            ctx = self.comment() + "return\n{\n" + row_ctx + "}"
+            return ctx
+        except RowError as e:
+            raise_ex( SheetError( str(e),self.sheet_name ),sys.exc_info()[2] )

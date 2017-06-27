@@ -1,6 +1,6 @@
 # py_exceltools
 基于openpyxl的excel转换工具。支持xlsx文件转换为lua、xml、json等配置文件。
-由于解析库从xlrd更换为openpyxl，不再支持xls文件的转换。
+由于解析库从xlrd更换为openpyxl，不再支持xls文件的转换。可以导出数组、map两种类型excel。
 
 关于openpyxl库：https://pypi.python.org/pypi/openpyxl。
 
@@ -21,8 +21,8 @@ win安装
     安装openpyxl,在cmd中运行:pip install openpyxl
 
 # 使用
-    lancher.bat(win)和lancher.sh(linux)为对应脚本，并且配置了对应的参数来转换
-    example.xlsx，生成的配置文件分别在server、client文件夹中。
+    lancher.bat(win)和lancher.sh(linux)为对应运行脚本。
+    当前配置了用于参考的参数来转换example.xlsx，可在server、client文件夹查看生成配置效果。
 
     参数：
     --input   ：需要转换的excel文件所在目录
@@ -39,10 +39,19 @@ win安装
 * 由于xml并不存在数组等结构，不建议使用。
 * 工具会检测server和client标识。如果不存在，则不导出些表。方便策划做备注
 
-# TODO
-* 如何导出零碎的配置。例如：
-```lua
-level = 90,
-system_id = 1,
+# 二次开发
+新增的writer必须提供以下接口:
+```python
+class Writer:
+
+    def __init__(self,,sheet_name,row_offset,col_offset):
+        pass
+    def suffix(self):
+        pass
+    def object_content(self,types,fields,rows):
+        pass
+    def array_content(self,types,fields,rows):
+        pass
+```
 
 

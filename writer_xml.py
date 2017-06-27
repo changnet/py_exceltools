@@ -24,10 +24,12 @@ except NameError:
 
 class Writer:
 
-    def __init__(self,types,fields,rows):
-        self.types  = types
-        self.fields = fields
-        self.rows   = rows
+    def __init__(self,doc_name,sheet_name,row_offset,col_offset):
+        self.doc_name   = doc_name
+        self.sheet_name = sheet_name
+        self.row_offset = row_offset
+        self.col_offset = col_offset
+
         self.doc    = Document()  #创建DOM文档对象
 
     def suffix(self):
@@ -109,23 +111,52 @@ class Writer:
 
         return node
 
-    def row_ctx(self,doc_name,sheet_name,CLT_ROW):
-        root = self.doc.createElement( doc_name + "_" + sheet_name ) #创建根元素
+    def root_element(self):
+        #创建根元素
+        root = self.doc.createElement( self.doc_name + "_" + self.sheet_name )
+        return root
+
+    def row_ctx(self):
+        root = self.root_element()
         for row_index,column_values in enumerate( self.rows ) :
             try:
-                node = self.column_ctx( sheet_name,column_values )
+                node = self.column_ctx( self.sheet_name,column_values )
                 root.appendChild( node )
             except ColumnError as e:
                 raise_ex( RowError( 
-                    str(e),row_index + 1 + CLT_ROW),sys.exc_info()[2] )
+                    str(e),row_index + 1 + self.row_offset ),sys.exc_info()[2] )
 
         return root
 
-    def content(self,doc_name,sheet_name,CLT_ROW):
+    def array_content(self,types,fields,rows):
         try:
-            root = self.row_ctx( doc_name,sheet_name,CLT_ROW )
+            self.types  = types
+            self.fields = fields
+            self.rows   = rows
+            root = self.row_ctx()
             self.doc.appendChild( root )
 
             return self.comment() + self.doc.toprettyxml( indent="   " )
         except RowError as e:
-            raise_ex( SheetError( str(e),sheet_name ),sys.exc_info()[2] )
+            raise_ex( SheetError( str(e),self.sheet_name ),sys.exc_info()[2] )
+
+    def object_content(self,types,fields,rows):
+        try:
+            self.types  = types
+            self.fields = fields
+            self.rows   = rows
+
+            root = self.root_element()
+            for row_index,value in enumerate( self.rows ) :
+                key = self.fields[row_index]
+                if None != key :
+                    value_type = self.types[row_index]
+                    node = self.doc.createElement( key )
+                    self.to_xml_value( node,value_type,value )
+                    root.appendChild( node )
+
+            self.doc.appendChild( root )
+
+            return self.comment() + self.doc.toprettyxml( indent="   " )
+        except RowError as e:
+            raise_ex( SheetError( str(e),self.sheet_name ),sys.exc_info()[2] )

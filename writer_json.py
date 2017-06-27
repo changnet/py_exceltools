@@ -23,10 +23,11 @@ except NameError:
 
 class Writer:
 
-    def __init__(self,types,fields,rows):
-        self.types  = types
-        self.fields = fields
-        self.rows   = rows
+    def __init__(self,doc_name,sheet_name,row_offset,col_offset):
+        self.doc_name   = doc_name
+        self.sheet_name = sheet_name
+        self.row_offset = row_offset
+        self.col_offset = col_offset
 
     def suffix(self):
         return ".json"
@@ -74,7 +75,7 @@ class Writer:
 
         return False
 
-    def object_ctx(self,CLT_ROW):
+    def object_ctx(self):
         content = {}
         for row_index,column_values in enumerate( self.rows ) :
             try:
@@ -84,11 +85,11 @@ class Writer:
                 content[key] = json_val
             except ColumnError as e:
                 raise_ex( RowError( 
-                    str(e),row_index + 1 + CLT_ROW),sys.exc_info()[2] )
+                    str(e),row_index + 1 + self.row_offset),sys.exc_info()[2] )
 
         return content
 
-    def array_ctx(self,CLT_ROW):
+    def array_ctx(self):
         content = []
         for row_index,column_values in enumerate( self.rows ) :
             try:
@@ -97,18 +98,38 @@ class Writer:
                 content.append( json_val )
             except ColumnError as e:
                 raise_ex( RowError( 
-                    str(e),row_index + 1 + CLT_ROW),sys.exc_info()[2] )
+                    str(e),row_index + 1 + self.row_offset),sys.exc_info()[2] )
 
         return content
 
-    def content(self,doc_name,sheet_name,CLT_ROW):
+    def object_content(self,types,fields,rows):
         try:
-            ctx = None
-            if self.is_object() :
-                ctx = self.object_ctx( CLT_ROW )
-            else :
-                ctx = self.array_ctx( CLT_ROW )
+            self.types  = types
+            self.fields = fields
+            self.rows   = rows
+
+            ctx = {}
+            for row_index,value in enumerate( self.rows ) :
+                key = self.fields[row_index]
+                if None != key :
+                    value_type = self.types[row_index]
+                    ctx[key] = self.to_json_value( value_type,value )
 
             return json.dumps( ctx,ensure_ascii=False,indent=4 )
         except RowError as e:
-            raise_ex( SheetError( str(e),sheet_name ),sys.exc_info()[2] )
+            raise_ex( SheetError( str(e),self.sheet_name ),sys.exc_info()[2] )
+
+    def array_content(self,types,fields,rows):
+        try:
+            self.types  = types
+            self.fields = fields
+            self.rows   = rows
+            ctx = None
+            if self.is_object() :
+                ctx = self.object_ctx()
+            else :
+                ctx = self.array_ctx()
+
+            return json.dumps( ctx,ensure_ascii=False,indent=4 )
+        except RowError as e:
+            raise_ex( SheetError( str(e),self.sheet_name ),sys.exc_info()[2] )
