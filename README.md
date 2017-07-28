@@ -33,6 +33,8 @@ win安装
     --swriter : 服务端配置文件转换器，可以指定为lua、json、xml
     --cwriter : 客户端配置文件转换器，可以指定为lua、json、xml
 
+    注：对于client和server，如果未配置输出目录或转换器，则不会导出。
+
 # 打包exe
     部署时，可以将python打包成exe。建议使用pyinstaller。截止发版时(2017-0729),
     由于最新的pyinstaller3.2.1尚不支持python3.6.1，建议使用python 3.5。此外，由于使用

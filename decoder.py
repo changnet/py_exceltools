@@ -61,8 +61,10 @@ class Sheet:
         file.close()
 
     def write_files(self,srv_path,clt_path):
-        self.write_one_file( self.srv_fields,srv_path,self.srv_writer )
-        self.write_one_file( self.clt_fields,clt_path,self.clt_writer )
+        if None != srv_path and None != self.srv_writer :
+            self.write_one_file( self.srv_fields,srv_path,self.srv_writer )
+        if None != clt_path and None != self.clt_writer :
+            self.write_one_file( self.clt_fields,clt_path,self.clt_writer )
 
 class ArraySheet(Sheet):
 

@@ -22,8 +22,12 @@ class Loader:
         self.timeout    = timeout
         self.suffix     = suffix
 
-        self.srv_writer = importlib.import_module( "writer_" + srv_writer )
-        self.clt_writer = importlib.import_module( "writer_" + clt_writer )
+        self.srv_writer = None
+        self.clt_writer = None
+        if None != srv_writer :
+            self.srv_writer = importlib.import_module( "writer_" + srv_writer )
+        if None != clt_writer :
+            self.clt_writer = importlib.import_module( "writer_" + clt_writer )
 
     def attention(self):
         print("********excel转换********")
@@ -51,14 +55,18 @@ class Loader:
         print("load %s files from %s modified in the last %d seconds" 
             % (self.suffix,self.input_path,self.timeout))
 
-        if not os.path.exists( self.srv_path ) : os.makedirs( self.srv_path )
-        if not os.path.exists( self.clt_path ) : os.makedirs( self.clt_path )
+        if None != self.srv_path and not os.path.exists( self.srv_path ) :
+            os.makedirs( self.srv_path )
+        if None != self.clt_path and not os.path.exists( self.clt_path ) :
+            os.makedirs( self.clt_path )
+
         now = time.time()
         file_list = os.listdir( options.input_path )
         for file in file_list:
             abspath = os.path.join( self.input_path,file )
             if self.can_load( file,abspath ):self.load_one( file,abspath )
-        print( "load done,%d second elapsed" % ( time.time() - now ) )
+
+        print( "done,%d second elapsed" % ( time.time() - now ) )
     
     def load_one(self,file,abspath):
         doc = ExcelDoc( file,abspath )
@@ -73,10 +81,8 @@ if __name__ == '__main__':
                      default="xls/",
                      help="read all files from this path" )
     parser.add_option( "-s", "--srv", dest="srv_path",
-                     default="server/",
                      help="write all server file to this path" )
     parser.add_option( "-c", "--clt", dest="clt_path",
-                     default="client/",
                      help="write all client file to this path" )
     parser.add_option( "-t", "--timeout", dest="timeout",type="int",
                      default="-1",
@@ -85,10 +91,8 @@ if __name__ == '__main__':
                      default="",
                      help="what type of file will be loaded.empty mean all files" )
     parser.add_option( "-w","--swriter", dest="srv_writer",
-                     default="lua",
                      help="which server writer you wish to use:lua xml json" )
     parser.add_option( "-l","--cwriter", dest="clt_writer",
-                     default="lua",
                      help="which client writer you wish to use:lua xml json" )
 
     options, args = parser.parse_args()
