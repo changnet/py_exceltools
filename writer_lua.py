@@ -162,7 +162,7 @@ class Writer:
         for index in range( 1,len( values ) ):
             try:
                 # 允许某个字段为空，因为并不是所有行都需要这些字段
-                if self.fields[index] and values[index] :
+                if None != self.fields[index] and None != values[index] :
                     ctx += self.pair_to_str( self.fields[index],
                         self.types[index],values[index],indent )
             except Exception as e:

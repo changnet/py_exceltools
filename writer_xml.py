@@ -100,7 +100,7 @@ class Writer:
         for index in range( 1,len( values ) ):
             try:
                 # 允许某个字段为空，因为并不是所有行都需要这些字段
-                if self.fields[index] and values[index] :
+                if None != self.fields[index] and None != values[index] :
                     sub_node = self.doc.createElement( str( self.fields[index] ) )
                     val = self.to_xml_value( 
                         sub_node,self.types[index],values[index] )
