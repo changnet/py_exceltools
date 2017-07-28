@@ -183,8 +183,9 @@ class ObjectSheet(Sheet):
 
 class ExcelDoc:
 
-    def __init__(self, file):
+    def __init__(self, file,abspath):
         self.file = file
+        self.abspath = abspath
 
     # 是否需要解析
     # 返回解析的对象类型
@@ -217,7 +218,7 @@ class ExcelDoc:
         print( "start decode %s ..." % self.file )
 
         base_name = os.path.splitext( self.file )[0]  #去除后缀
-        wb = openpyxl.load_workbook( self.file )
+        wb = openpyxl.load_workbook( self.abspath )
 
         for wb_sheet in wb.worksheets:
             Sheeter = self.need_decode( wb_sheet )

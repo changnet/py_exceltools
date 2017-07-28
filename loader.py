@@ -33,15 +33,15 @@ class Loader:
         print("**第一列为主键，不可重复。可以为字符串，为空则转换为数组")
         print("***************************************************\n")
 
-    def can_load(self,file):
-        if not os.path.isfile( file ): return False
+    def can_load(self,file,abspath):
+        if not os.path.isfile( abspath ): return False
         # ~开头的excel文件是临时文件
         if file.startswith( "~" ): return False
         if "" != self.suffix and not file.endswith( self.suffix ): return False
 
         if self.timeout > 0:
             now = time.time()
-            mtime = os.path.getmtime( file )
+            mtime = os.path.getmtime( abspath )
 
             if now - mtime > self.timeout: return False
 
@@ -56,11 +56,12 @@ class Loader:
         now = time.time()
         file_list = os.listdir( options.input_path )
         for file in file_list:
-            if self.can_load( file ):self.load_one( file )
+            abspath = os.path.join( self.input_path,file )
+            if self.can_load( file,abspath ):self.load_one( file,abspath )
         print( "load done,%d second elapsed" % ( time.time() - now ) )
     
-    def load_one(self,file):
-        doc = ExcelDoc( file )
+    def load_one(self,file,abspath):
+        doc = ExcelDoc( file,abspath )
         doc.decode( self.srv_path,
             self.clt_path,self.srv_writer,self.clt_writer )
 
