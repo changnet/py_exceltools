@@ -33,6 +33,15 @@ win安装
     --swriter : 服务端配置文件转换器，可以指定为lua、json、xml
     --cwriter : 客户端配置文件转换器，可以指定为lua、json、xml
 
+# 打包exe
+    部署时，可以将python打包成exe。建议使用pyinstaller。截止发版时(2017-0729),
+    由于最新的pyinstaller3.2.1尚不支持python3.6.1，建议使用python 3.5。此外，由于使用
+    了动态导入，pyinstaller不能直接生成完整的exe，需要使用hiddenimports。loader.spec内
+    已包含隐藏的模块，可直接使用。
+
+    pip install pyinstaller
+    pyinstaller loader.spec
+
 # 建议
 * 在string中无法直接使用换行等特殊称号。请用\n等转义字符替代。
 * 设置表结构时，数据尽量偏平化。例如一个玩家身上有8种装备，不应该配8个表，而是在装备表中加一个字段pos
