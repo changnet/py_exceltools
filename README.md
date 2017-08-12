@@ -36,10 +36,10 @@ win安装
     注：对于client和server，如果未配置输出目录或转换器，则不会导出。
 
 # 打包exe
-    部署时，可以将python打包成exe。建议使用pyinstaller。截止发版时(2017-0729),
-    由于最新的pyinstaller3.2.1尚不支持python3.6.1，建议使用python 3.5。此外，由于使用
-    了动态导入，pyinstaller不能直接生成完整的exe，需要使用hiddenimports。loader.spec内
-    已包含隐藏的模块，可直接使用。
+部署时，可以将python打包成exe。建议使用pyinstaller。截止发版时(2017-07-29),由于最新的
+pyinstaller3.2.1尚不支持python3.6.1，建议使用python 3.5。此外，由于使用了动态导入，
+pyinstaller不能直接生成完整的exe，需要使用hiddenimports。loader.spec内已包含隐藏的模
+块，可直接使用。
 
     pip install pyinstaller
     pyinstaller loader.spec
