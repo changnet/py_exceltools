@@ -1,6 +1,6 @@
 [
     {
-        "attr": [
+        "attr":[
             [
                 1,
                 700
@@ -14,23 +14,23 @@
                 900
             ]
         ],
-        "desc": [
+        "desc":[
             "来源1",
             "来源2",
             "来源4"
         ],
-        "icons": {
-            "arm": "arm1001",
-            "face": [
+        "icons":{
+            "arm":"arm1001",
+            "face":[
                 "face10010",
                 "face10011"
             ]
         },
-        "id": 1001,
-        "name": "examp1001"
+        "id":1001,
+        "name":"examp1001"
     },
     {
-        "attr": [
+        "attr":[
             [
                 1,
                 700
@@ -44,23 +44,23 @@
                 901
             ]
         ],
-        "desc": [
+        "desc":[
             "来源1",
             "来源2",
             "来源4"
         ],
-        "icons": {
-            "arm": "arm1002",
-            "face": [
+        "icons":{
+            "arm":"arm1002",
+            "face":[
                 "face10010",
                 "face10011"
             ]
         },
-        "id": 1002,
-        "name": "examp1002"
+        "id":1002,
+        "name":"examp1002"
     },
     {
-        "attr": [
+        "attr":[
             [
                 1,
                 700
@@ -74,23 +74,23 @@
                 902
             ]
         ],
-        "desc": [
+        "desc":[
             "来源1",
             "来源2",
             "来源5"
         ],
-        "icons": {
-            "arm": "arm1003",
-            "face": [
+        "icons":{
+            "arm":"arm1003",
+            "face":[
                 "face10010",
                 "face10011"
             ]
         },
-        "id": 1003,
-        "name": "examp1003"
+        "id":1003,
+        "name":"examp1003"
     },
     {
-        "attr": [
+        "attr":[
             [
                 1,
                 700
@@ -104,19 +104,19 @@
                 903
             ]
         ],
-        "desc": [
+        "desc":[
             "来源1",
             "来源2",
             "来源6"
         ],
-        "icons": {
-            "arm": "arm1004",
-            "face": [
+        "icons":{
+            "arm":"arm1004",
+            "face":[
                 "face10010",
                 "face10011"
             ]
         },
-        "id": 1004,
-        "name": "examp1004"
+        "id":1004,
+        "name":"examp1004"
     }
 ]

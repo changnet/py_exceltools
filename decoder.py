@@ -31,7 +31,8 @@ OBJECT_FLAG = "object"
 
 TYPES = { "int":1,"number":2,"int64":3,"string":4,"json":5 }
 
-class Sheet:
+# 继承object类，以解决在python2中的错误：TypeError: must be type, not classobj
+class Sheet(object):
 
     def __init__(self,base_name,wb_sheet,srv_writer,clt_writer):
         self.rows   = []

@@ -14,6 +14,9 @@ linux安装
     apt-get install python-pip
     pip install openpyxl
 
+ps:
+1. "Cannot fetch index base URL http://pypi.python.org/simple/"错误可能是SSL的问题，
+尝试：pip install openpyxl --index-url=https://pypi.python.org/simple/
 
 win安装
 

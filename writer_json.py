@@ -130,6 +130,6 @@ class Writer:
             else :
                 ctx = self.array_ctx()
 
-            return json.dumps( ctx,ensure_ascii=False,indent=4,sort_keys=True )
+            return json.dumps( ctx,ensure_ascii=False,indent=4,sort_keys=True,separators=(',', ':') )
         except RowError as e:
             raise_ex( SheetError( str(e),self.sheet_name ),sys.exc_info()[2] )
