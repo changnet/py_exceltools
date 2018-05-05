@@ -39,8 +39,8 @@ class Loader:
 
     def can_load(self,file,abspath):
         if not os.path.isfile( abspath ): return False
-        # ~开头的excel文件是临时文件
-        if file.startswith( "~" ): return False
+        # ~开头的excel文件是临时文件，linux下wps临时文件以.~开头
+        if file.startswith( "~" ) or file.startswith( "." ): return False
         if "" != self.suffix and not file.endswith( self.suffix ): return False
 
         if self.timeout > 0:

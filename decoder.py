@@ -17,7 +17,7 @@ OCMT_COL = 1  # comment column 注释
 OTPE_COL = 2  # type    column 类型
 OSRV_COL = 3  # server  column 服务器
 OCLT_COL = 4  # client  column 客户端
-OCTX_COL = 5  # content column 内空所在列
+OCTX_COL = 5  # content column 内容所在列
 OFLG_ROW = 1  # flag    row    server client所在行
 
 SRV_FLAG = "server"
