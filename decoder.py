@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import os
+import json
 import error
 import openpyxl
 from slpp.slpp import slpp as lua
@@ -32,18 +33,61 @@ OBJECT_FLAG = "object"
 
 TYPES = { "int":1,"number":2,"int64":3,"string":4,"json":5 }
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
+try:
+    long
+except NameError:
+    long = int
+
+# 类型转换器
+class ValueConverter(object):
+    def __init__(self):
+        pass
+
+    # 在python中，字符串和unicode是不一样的。默认从excel读取的数据都是unicode。
+    # str可以通过decode转换为unicode
+    # ascii' codec can't encode characters
+    def to_unicode_str(self,val):
+        if isinstance( val,str ) :
+            return val
+        else :
+            return str( val ).decode("utf8")
+
+    def to_value(self,val_type,val):
+        if "int" == val_type :
+            return int( val )
+        elif "int64" == val_type :
+            # 两次转换保证为数字
+            return long( val )
+        elif "number" == val_type :
+            # 去除带小数时的小数点，100.0 ==>> 100
+            if long( val ) == float( val ) : return long( val )
+            return float( val )
+        elif "string" == val_type :
+            return self.to_unicode_str( val )
+        elif "json" == val_type :
+            return json.loads( val )
+        else :
+            raise Exception( "invalid type",val_type )
+
 # 继承object类，以解决在python2中的错误：TypeError: must be type, not classobj
 class Sheet(object):
 
     def __init__(self,base_name,wb_sheet,srv_writer,clt_writer):
         self.rows   = []
-        self.types  = []
+        self.types  = []# 记录各列字段的类型
 
         self.srv_writer = srv_writer
         self.clt_writer = clt_writer
 
-        self.srv_fields = []
-        self.clt_fields = []
+        self.srv_fields = []#服务端各列字段名
+        self.clt_fields = []#客户端各列字段名
+
+        self.converter = ValueConverter()
 
         self.wb_sheet  = wb_sheet
         self.base_name = base_name
@@ -63,33 +107,43 @@ class Sheet(object):
         file.close()
 
     def write_files(self,srv_path,clt_path):
-        if None != srv_path and None != self.srv_writer :
-            self.write_one_file( self.srv_fields,srv_path,self.srv_writer )
-        if None != clt_path and None != self.clt_writer :
-            self.write_one_file( self.clt_fields,clt_path,self.clt_writer )
+        pass
+        # if None != srv_path and None != self.srv_writer :
+        #     self.write_one_file( self.srv_fields,srv_path,self.srv_writer )
+        # if None != clt_path and None != self.clt_writer :
+        #     self.write_one_file( self.clt_fields,clt_path,self.clt_writer )
 
+# 导出数组类型配置，A1格子的内容有array标识
 class ArraySheet(Sheet):
 
     def __init__(self,base_name,wb_sheet,srv_writer,clt_writer):
+        # 记录导出各行的内容
+        self.srv_ctx = []
+        self.clt_ctx = []
+
+        # 导出的内容起始行数、列数，当发错误时定位
         self.row_offset = ACLT_ROW
         self.col_offset = AKEY_COL
         super( ArraySheet, self ).__init__(
             base_name,wb_sheet,srv_writer,clt_writer )
 
+    # 解析各列的类型(string、number...)
     def decode_type(self):
-        # key的类型可以不填写，默认为None
-        self.types.append( self.wb_sheet.cell(row=ATPE_ROW, column=AKEY_COL).value )
+        # 第一列没数据，类型可以不填，默认为None，但是这里要占个位
+        self.types.append( None )
 
         for col_index in range( AKEY_COL + 1,self.wb_sheet.max_column + 1 ):
             value = self.wb_sheet.cell( row = ATPE_ROW, column = col_index ).value
 
             # 单元格为空的时候，wb_sheet.cell(row=1, column=2).value == None
+            # 类型那一行必须连续，空白表示后面的数据都不导出了
             if value == None: break
             if not TYPES[value]:
                 raise Exception( "invalid type",value )
 
             self.types.append( value )
 
+    # 解析客户端、服务器的字段名(server、client)那两行
     def decode_field(self,fields,row_index):
         for col_index in range( AKEY_COL,len( self.types ) + 1 ):
             value = self.wb_sheet.cell(
@@ -98,16 +152,40 @@ class ArraySheet(Sheet):
             # 对于不需要导出的field，可以为空。即value为None
             fields.append( value )
 
-    def decode_cell(self):
-        for row_index in range( ACLT_ROW + 1,self.wb_sheet.max_row + 1 ):
-            column_values = []
-            # 从第一列开始解析，即包括key
-            for col_index in range( AKEY_COL,len( self.types ) + 1 ):
-                value = self.wb_sheet.cell(
-                    row = row_index, column = col_index ).value
-                column_values.append( value )
+    # 解析出一个格子的内容
+    def decode_cell(self,row_idx,col_idx):
+        value = self.wb_sheet.cell( row = row_idx, column = col_idx ).value
+        if not value: return None
 
-            self.rows.append( column_values )
+        # 类型是从0下标开始，但是excel的第一列从1开始
+        return self.converter.to_value( self.types[col_idx - 1],value )
+
+    # 解析出一行的内容
+    def decode_row(self,row_idx):
+        srv_row = {}
+        clt_row = {}
+
+        # 第一列没数据，从第二列开始解析
+        for col_idx in range( AKEY_COL + 1,len( self.types ) ):
+            value = self.decode_cell( row_idx,col_idx )
+            if not value : continue
+
+            srv_key = self.srv_fields[col_idx]
+            clt_key = self.clt_fields[col_idx]
+
+            if srv_key : srv_row[srv_key] = value
+            if clt_key : clt_row[clt_key] = value
+
+        return srv_row,clt_row # 返回一个tuple
+
+    # 解析导出的内容
+    def decode_ctx(self):
+        for row_idx in range( ACLT_ROW + 1,self.wb_sheet.max_row + 1 ):
+            srv_row,clt_row = self.decode_row( row_idx )
+
+            # 不为空才追加
+            if any( srv_row ) : self.srv_ctx.append( srv_row )
+            if any( clt_row ) : self.clt_ctx.append( clt_row )
 
     def writer_content(self,writer,fields):
         return writer.array_content( self.types,fields,self.rows )
@@ -124,7 +202,9 @@ class ArraySheet(Sheet):
         self.decode_field( self.srv_fields,ASRV_ROW )
         self.decode_field( self.clt_fields,ACLT_ROW )
 
-        self.decode_cell()
+        self.decode_ctx()
+        print( self.srv_ctx )
+        print( self.clt_ctx )
 
         print( "    decode sheet %s done" % wb_sheet.title.ljust(24,".") )
         return True
