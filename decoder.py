@@ -4,6 +4,7 @@
 import os
 import error
 import openpyxl
+from slpp.slpp import slpp as lua
 
 # 数组模式下，各个栏的分布
 ACMT_ROW = 1  # comment row 注释
@@ -72,7 +73,7 @@ class ArraySheet(Sheet):
     def __init__(self,base_name,wb_sheet,srv_writer,clt_writer):
         self.row_offset = ACLT_ROW
         self.col_offset = AKEY_COL
-        super( ArraySheet, self ).__init__( 
+        super( ArraySheet, self ).__init__(
             base_name,wb_sheet,srv_writer,clt_writer )
 
     def decode_type(self):
@@ -91,7 +92,7 @@ class ArraySheet(Sheet):
 
     def decode_field(self,fields,row_index):
         for col_index in range( AKEY_COL,len( self.types ) + 1 ):
-            value = self.wb_sheet.cell( 
+            value = self.wb_sheet.cell(
                 row = row_index, column = col_index ).value
 
             # 对于不需要导出的field，可以为空。即value为None
@@ -102,10 +103,10 @@ class ArraySheet(Sheet):
             column_values = []
             # 从第一列开始解析，即包括key
             for col_index in range( AKEY_COL,len( self.types ) + 1 ):
-                value = self.wb_sheet.cell( 
+                value = self.wb_sheet.cell(
                     row = row_index, column = col_index ).value
                 column_values.append( value )
-            
+
             self.rows.append( column_values )
 
     def writer_content(self,writer,fields):
@@ -133,12 +134,12 @@ class ObjectSheet(Sheet):
     def __init__(self,base_name,wb_sheet,srv_writer,clt_writer):
         self.row_offset = OCLT_COL
         self.col_offset = OFLG_ROW
-        super( ObjectSheet, self ).__init__( 
+        super( ObjectSheet, self ).__init__(
             base_name,wb_sheet,srv_writer,clt_writer )
 
     def decode_type(self):
         for row_index in range( OFLG_ROW + 1,self.wb_sheet.max_row + 1 ):
-            value = self.wb_sheet.cell( 
+            value = self.wb_sheet.cell(
                 row = row_index, column = OTPE_COL ).value
 
             # 单元格为空的时候，wb_sheet.cell(row=1, column=2).value == None
@@ -150,7 +151,7 @@ class ObjectSheet(Sheet):
 
     def decode_field(self,fields,col_index):
         for row_index in range( OFLG_ROW + 1,len( self.types ) + 2 ):
-            value = self.wb_sheet.cell( 
+            value = self.wb_sheet.cell(
                 row = row_index, column = col_index ).value
 
             # 对于不需要导出的field，可以为空。即value为None
@@ -159,7 +160,7 @@ class ObjectSheet(Sheet):
     def decode_cell(self):
         # 第一行为flag行，包括最后一行，所以要types + 2
         for row_index in range( OFLG_ROW + 1,len( self.types ) + 2 ):
-            value = self.wb_sheet.cell( 
+            value = self.wb_sheet.cell(
                 row = row_index, column = OCTX_COL ).value
 
             self.rows.append( value )
@@ -193,7 +194,7 @@ class ExcelDoc:
     # 是否需要解析
     # 返回解析的对象类型
     def need_decode(self,wb_sheet):
-        sheet_val = wb_sheet.cell( 
+        sheet_val = wb_sheet.cell(
             row = SHEET_FLAG_ROW, column = SHEET_FLAG_ROW ).value
 
         sheeter = None

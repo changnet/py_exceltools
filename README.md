@@ -15,8 +15,24 @@ linux安装
     pip install openpyxl
 
 ps:
-1. "Cannot fetch index base URL http://pypi.python.org/simple/"错误可能是SSL的问题，
+```
+"Cannot fetch index base URL http://pypi.python.org/simple/"  
 尝试：pip install openpyxl --index-url=https://pypi.python.org/simple/
+```
+
+```
+    Using bundled Lua
+    building without Cython
+    Traceback (most recent call last):
+      File "<string>", line 1, in <module>
+      File "C:\Users\dell\AppData\Local\Temp\pip-install-ai_up66r\lupa\setup.py", line 308, in <module>
+        for text_file in ['README.rst', 'INSTALL.rst', 'CHANGES.rst', "LICENSE.txt"]])
+      File "C:\Users\dell\AppData\Local\Temp\pip-install-ai_up66r\lupa\setup.py", line 308, in <listcomp>
+        for text_file in ['README.rst', 'INSTALL.rst', 'CHANGES.rst', "LICENSE.txt"]])
+      File "C:\Users\dell\AppData\Local\Temp\pip-install-ai_up66r\lupa\setup.py", line 298, in read_file
+        return f.read()
+    UnicodeDecodeError: 'gbk' codec can't decode byte 0x93 in position 1183: illegal multibyte sequence
+```
 
 win安装
 

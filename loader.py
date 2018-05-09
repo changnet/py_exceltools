@@ -40,7 +40,9 @@ class Loader:
     def can_load(self,file,abspath):
         if not os.path.isfile( abspath ): return False
         # ~开头的excel文件是临时文件，linux下wps临时文件以.~开头
-        if file.startswith( "~" ) or file.startswith( "." ): return False
+        # 永中office是$开头
+        if file.startswith( "~" ) \
+            or file.startswith( "." ) or file.startswith( "$" ): return False
         if "" != self.suffix and not file.endswith( self.suffix ): return False
 
         if self.timeout > 0:
@@ -52,7 +54,7 @@ class Loader:
         return True
 
     def load(self):
-        print("load %s files from %s modified in the last %d seconds" 
+        print("load %s files from %s modified in the last %d seconds"
             % (self.suffix,self.input_path,self.timeout))
 
         if None != self.srv_path and not os.path.exists( self.srv_path ) :
@@ -67,7 +69,7 @@ class Loader:
             if self.can_load( file,abspath ):self.load_one( file,abspath )
 
         print( "done,%d second elapsed" % ( time.time() - now ) )
-    
+
     def load_one(self,file,abspath):
         doc = ExcelDoc( file,abspath )
         doc.decode( self.srv_path,
