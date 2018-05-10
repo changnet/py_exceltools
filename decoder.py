@@ -78,7 +78,6 @@ class ValueConverter(object):
 class Sheet(object):
 
     def __init__(self,base_name,wb_sheet,srv_writer,clt_writer):
-        self.rows   = []
         self.types  = []# 记录各列字段的类型
 
         self.srv_writer = srv_writer
@@ -92,12 +91,32 @@ class Sheet(object):
         self.wb_sheet  = wb_sheet
         self.base_name = base_name
 
-    def write_one_file(self,fields,base_path,writer):
-        if len( fields ) <= 0 : return
+    # 解析一个表格
+    def decode_sheet(self):
+        wb_sheet = self.wb_sheet
 
-        wt = writer.Writer( self.base_name,
-            self.wb_sheet.title,self.row_offset,self.col_offset )
-        ctx = self.writer_content( wt,fields )
+        self.decode_type()
+        if len( self.types ) <= ATPE_ROW:
+            print( "    decode sheet %s nothing to decode,abort" \
+            % wb_sheet.title.ljust(24,".") )
+            return False
+
+        self.decode_field( self.srv_fields,ASRV_ROW )
+        self.decode_field( self.clt_fields,ACLT_ROW )
+
+        self.decode_ctx()
+
+        print( "    decode sheet %s done" % wb_sheet.title.ljust(24,".") )
+        return True
+
+    # 写入配置到文件
+    def write_one_file(self,ctx,base_path,writer):
+        # 有些配置可能只导出客户端或只导出服务器
+        if not any(ctx) : return
+
+        wt = writer.Writer()
+
+        ctx = wt.context( ctx )
         suffix = wt.suffix()
 
         #必须为wb，不然无法写入utf-8
@@ -106,12 +125,12 @@ class Sheet(object):
         file.write( ctx.encode( "utf-8" ) )
         file.close()
 
+    # 分别写入到服务端、客户端的配置文件
     def write_files(self,srv_path,clt_path):
-        pass
         # if None != srv_path and None != self.srv_writer :
         #     self.write_one_file( self.srv_fields,srv_path,self.srv_writer )
-        # if None != clt_path and None != self.clt_writer :
-        #     self.write_one_file( self.clt_fields,clt_path,self.clt_writer )
+        if None != clt_path and None != self.clt_writer :
+            self.write_one_file( self.clt_ctx,clt_path,self.clt_writer )
 
 # 导出数组类型配置，A1格子的内容有array标识
 class ArraySheet(Sheet):
@@ -121,9 +140,6 @@ class ArraySheet(Sheet):
         self.srv_ctx = []
         self.clt_ctx = []
 
-        # 导出的内容起始行数、列数，当发错误时定位
-        self.row_offset = ACLT_ROW
-        self.col_offset = AKEY_COL
         super( ArraySheet, self ).__init__(
             base_name,wb_sheet,srv_writer,clt_writer )
 
@@ -166,12 +182,12 @@ class ArraySheet(Sheet):
         clt_row = {}
 
         # 第一列没数据，从第二列开始解析
-        for col_idx in range( AKEY_COL + 1,len( self.types ) ):
+        for col_idx in range( AKEY_COL + 1,len( self.types ) + 1 ):
             value = self.decode_cell( row_idx,col_idx )
             if not value : continue
 
-            srv_key = self.srv_fields[col_idx]
-            clt_key = self.clt_fields[col_idx]
+            srv_key = self.srv_fields[col_idx - 1]
+            clt_key = self.clt_fields[col_idx - 1]
 
             if srv_key : srv_row[srv_key] = value
             if clt_key : clt_row[clt_key] = value
@@ -187,83 +203,60 @@ class ArraySheet(Sheet):
             if any( srv_row ) : self.srv_ctx.append( srv_row )
             if any( clt_row ) : self.clt_ctx.append( clt_row )
 
-    def writer_content(self,writer,fields):
-        return writer.array_content( self.types,fields,self.rows )
-
-    def decode_sheet(self):
-        wb_sheet = self.wb_sheet
-
-        self.decode_type()
-        if len( self.types ) <= ATPE_ROW:
-            print( "    decode sheet %s nothing to decode,abort" \
-            % wb_sheet.title.ljust(24,".") )
-            return False
-
-        self.decode_field( self.srv_fields,ASRV_ROW )
-        self.decode_field( self.clt_fields,ACLT_ROW )
-
-        self.decode_ctx()
-        print( self.srv_ctx )
-        print( self.clt_ctx )
-
-        print( "    decode sheet %s done" % wb_sheet.title.ljust(24,".") )
-        return True
-
+# 导出object类型的结构，A1格子有object标识
 class ObjectSheet(Sheet):
 
     def __init__(self,base_name,wb_sheet,srv_writer,clt_writer):
-        self.row_offset = OCLT_COL
-        self.col_offset = OFLG_ROW
+        # 记录导出各行的内容
+        self.srv_ctx = {}
+        self.clt_ctx = {}
+
         super( ObjectSheet, self ).__init__(
             base_name,wb_sheet,srv_writer,clt_writer )
 
+    # 解析各字段的类型
     def decode_type(self):
         for row_index in range( OFLG_ROW + 1,self.wb_sheet.max_row + 1 ):
             value = self.wb_sheet.cell(
                 row = row_index, column = OTPE_COL ).value
 
-            # 单元格为空的时候，wb_sheet.cell(row=1, column=2).value == None
+            # 类型必须连续，遇到空则认为后续数据不再导出
             if value == None: break
             if not TYPES[value]:
                 raise Exception( "invalid type",value )
 
             self.types.append( value )
 
-    def decode_field(self,fields,col_index):
-        for row_index in range( OFLG_ROW + 1,len( self.types ) + 2 ):
-            value = self.wb_sheet.cell(
-                row = row_index, column = col_index ).value
+    # 导出客户端、服务端字段名(server、client)那一列
+    def decode_field(self,fields,col_idx):
+        for row_idx in range( OFLG_ROW + 1,len( self.types ) + 2 ):
+            value = self.wb_sheet.cell( row = row_idx, column = col_idx ).value
 
             # 对于不需要导出的field，可以为空。即value为None
             fields.append( value )
 
-    def decode_cell(self):
+    # 解析一个单元格内容
+    def decode_cell(self,row_idx):
+        value = self.wb_sheet.cell( row = row_idx, column = OCTX_COL ).value
+        if not value : return None
+
+        # 在object的结构中，数据是从第二行开始的，所以types的下标偏移2
+        return self.converter.to_value( self.types[row_idx - 2],value )
+
+    def decode_ctx(self):
         # 第一行为flag行，包括最后一行，所以要types + 2
-        for row_index in range( OFLG_ROW + 1,len( self.types ) + 2 ):
-            value = self.wb_sheet.cell(
-                row = row_index, column = OCTX_COL ).value
+        for row_idx in range( OFLG_ROW + 1,len( self.types ) + 2 ):
+            value = self.decode_cell( row_idx )
+            if not value : continue
 
-            self.rows.append( value )
+            srv_key = self.srv_fields[row_idx - 2]
+            clt_key = self.clt_fields[row_idx - 2]
 
-    def writer_content(self,writer,fields):
-        return writer.object_content( self.types,fields,self.rows )
+            if srv_key : self.srv_ctx[srv_key] = value
+            if clt_key : self.clt_ctx[clt_key] = value
 
-    def decode_sheet(self):
-        wb_sheet = self.wb_sheet
-
-        self.decode_type()
-        if len( self.types ) <= 0:
-            print( "    decode sheet %s nothing to decode,abort" \
-            % wb_sheet.title.ljust(24,".") )
-            return False
-
-        self.decode_field( self.srv_fields,OSRV_COL )
-        self.decode_field( self.clt_fields,OCLT_COL )
-
-        self.decode_cell()
-
-        print( "    decode sheet %s done" % wb_sheet.title.ljust(24,".") )
-        return True
+        print( self.srv_ctx )
+        print( self.clt_ctx )
 
 class ExcelDoc:
 
