@@ -61,11 +61,11 @@ class Writer:
             # key要用[]括起来，防止有数字key
             key = "".join( ["[",lk,"]"] )
 
-            # 长度太长或者子类型有缩进，则必须换行
+            # 子类型有缩进，则必须换行
             if is_indent :
-                val = "".join( [cur_indent,key," =","\n",lv] )
+                val = "".join( [key," =","\n",lv] )
             else :
-                val = "".join( [cur_indent,key," = ",lv] )
+                val = "".join( [key," = ",lv] )
 
             dict_ctx_list.append( val )
 
@@ -94,13 +94,28 @@ class Writer:
 
         if any_indent :
             # 子元素是dict或者list并且换了行，则都必须换行
-            sep = ",\n" + next_indent
-            list_str = sep.join( list_ctx_list )
+            list_str = ",\n".join( list_ctx_list )
             return True,"".join(
                 [cur_indent,"{\n",list_str,"\n",cur_indent,"}"] )
         elif total_len > BASE_LENGTH :
             # 元素太多，一行显示不下，比如策划配置了上千个{a,a,a,a,a,a,a,a,a,a,a,a}
             # 应该自动分行，一行显示合适的个数
+            cur_len = 0
+            cur_ctx = []
+            line_ctx = []
+            for ctx in list_ctx_list :
+                cur_len = len(ctx)
+                cur_ctx.append( ctx )
+                if cur_len >= BASE_LENGTH :
+                    line_ctx.append( ",".join( cur_ctx ) )
+                    cur_len = 0
+                    cur_ctx = []
+            if any(cur_ctx) : line_ctx.append( ",".join( cur_ctx ) )
+
+            sep = ",\n" + next_indent
+            list_str = sep.join( line_ctx )
+            return True,"".join(
+                [cur_indent,"{\n",next_indent,list_str,"\n",cur_indent,"}"] )
         else :
             # 返回 {a,b,c}这种不换行的格式
             list_str = ",".join( list_ctx_list )
