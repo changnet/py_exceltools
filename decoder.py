@@ -61,7 +61,6 @@ class ValueConverter(object):
         if "int" == val_type :
             return int( val )
         elif "int64" == val_type :
-            # 两次转换保证为数字
             return long( val )
         elif "number" == val_type :
             # 去除带小数时的小数点，100.0 ==>> 100
@@ -114,7 +113,7 @@ class Sheet(object):
         # 有些配置可能只导出客户端或只导出服务器
         if not any(ctx) : return
 
-        wt = writer.Writer()
+        wt = writer.Writer(self.base_name,self.wb_sheet.title)
 
         ctx = wt.context( ctx )
         suffix = wt.suffix()
@@ -254,9 +253,6 @@ class ObjectSheet(Sheet):
 
             if srv_key : self.srv_ctx[srv_key] = value
             if clt_key : self.clt_ctx[clt_key] = value
-
-        print( self.srv_ctx )
-        print( self.clt_ctx )
 
 class ExcelDoc:
 

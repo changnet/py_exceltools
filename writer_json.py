@@ -7,8 +7,9 @@ import json
 
 class Writer:
 
-    def __init__(self):
-        pass
+    def __init__(self,doc_name,sheet_name):
+        self.doc_name   = doc_name
+        self.sheet_name = sheet_name
 
     # 文件后缀
     def suffix(self):
