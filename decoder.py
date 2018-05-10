@@ -30,7 +30,7 @@ SHEET_FLAG_COL = 1
 ARRAY_FLAG  = "array"
 OBJECT_FLAG = "object"
 
-TYPES = { "int":1,"number":2,"int64":3,"string":4,"json":5 }
+TYPES = { "int":1,"number":2,"int64":3,"string":4,"json":5,"lua":6 }
 
 try:
     basestring
@@ -61,6 +61,8 @@ class ValueConverter(object):
             return str( val )
         elif "json" == val_type :
             return json.loads( val )
+        elif "lua" == val_type :
+            return lua.decode( val )
         else :
             raise Exception( "invalid type",val_type )
 
