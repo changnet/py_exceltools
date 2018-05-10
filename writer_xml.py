@@ -42,7 +42,9 @@ class Writer:
 
     # dict类型转换为xml
     def dict_to_xml(self,root,value):
-        for k,v in value.items() :
+        # 需要对key排序，不然每次导出的xml字段是乱的，对版本管理不友好
+        for k in sorted( value ) :
+            v = value[k]
             sub_root = self.doc.createElement( k )
 
             self.to_xml( sub_root,v )
@@ -75,7 +77,8 @@ class Writer:
             # 去除带小数时的小数点，100.0 ==>> 100
             if long( value ) == float( value ) :
                 sub_node = self.doc.createTextNode( str( long( value ) ) )
-            sub_node = self.doc.createTextNode( str( value ) )
+            else:
+                sub_node = self.doc.createTextNode( str( value ) )
         elif str == val_type :
             val_type_str = "string"
             sub_node = self.doc.createTextNode( value )

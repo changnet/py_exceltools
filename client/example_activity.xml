@@ -7,8 +7,7 @@ http://www.python-excel.org/
 
 <?xml version="1.0" ?>
 <example_activity>
-   <level type="int64">90</level>
-   <close type="string">18:30:00</close>
+   <actId type="int64">10</actId>
    <award>
       <item index="0">
          <item index="0" type="int64">1001</item>
@@ -23,6 +22,7 @@ http://www.python-excel.org/
          <item index="1" type="int64">1</item>
       </item>
    </award>
+   <close type="string">18:30:00</close>
+   <level type="int64">90</level>
    <open type="string">18:00:00</open>
-   <actId type="int64">10</actId>
 </example_activity>

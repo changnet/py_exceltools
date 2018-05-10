@@ -64,7 +64,8 @@ class ValueConverter(object):
             return long( val )
         elif "number" == val_type :
             # 去除带小数时的小数点，100.0 ==>> 100
-            if long( val ) == float( val ) : return long( val )
+            # number就让它带小数点吧，不然强类型的配置无法正确识别出来
+            # if long( val ) == float( val ) : return long( val )
             return float( val )
         elif "string" == val_type :
             return self.to_unicode_str( val )
@@ -126,8 +127,8 @@ class Sheet(object):
 
     # 分别写入到服务端、客户端的配置文件
     def write_files(self,srv_path,clt_path):
-        # if None != srv_path and None != self.srv_writer :
-        #     self.write_one_file( self.srv_fields,srv_path,self.srv_writer )
+        if None != srv_path and None != self.srv_writer :
+            self.write_one_file( self.srv_ctx,srv_path,self.srv_writer )
         if None != clt_path and None != self.clt_writer :
             self.write_one_file( self.clt_ctx,clt_path,self.clt_writer )
 

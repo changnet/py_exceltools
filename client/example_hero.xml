@@ -8,20 +8,6 @@ http://www.python-excel.org/
 <?xml version="1.0" ?>
 <example_hero>
    <item index="0">
-      <icons>
-         <face>
-            <item index="0" type="string">face10010</item>
-            <item index="1" type="string">face10011</item>
-         </face>
-         <arm type="string">arm1001</arm>
-      </icons>
-      <id type="number">1001.0</id>
-      <desc>
-         <item index="0" type="string">来源1</item>
-         <item index="1" type="string">来源2</item>
-         <item index="2" type="string">来源4</item>
-      </desc>
-      <name type="string">examp1001</name>
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -36,22 +22,22 @@ http://www.python-excel.org/
             <item index="1" type="int64">900</item>
          </item>
       </attr>
-   </item>
-   <item index="1">
-      <icons>
-         <face>
-            <item index="0" type="string">face10010</item>
-            <item index="1" type="string">face10011</item>
-         </face>
-         <arm type="string">arm1002</arm>
-      </icons>
-      <id type="number">1002.0</id>
       <desc>
          <item index="0" type="string">来源1</item>
          <item index="1" type="string">来源2</item>
          <item index="2" type="string">来源4</item>
       </desc>
-      <name type="string">examp1002</name>
+      <icons>
+         <arm type="string">arm1001</arm>
+         <face>
+            <item index="0" type="string">face10010</item>
+            <item index="1" type="string">face10011</item>
+         </face>
+      </icons>
+      <id type="number">1001</id>
+      <name type="string">examp1001</name>
+   </item>
+   <item index="1">
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -66,22 +52,22 @@ http://www.python-excel.org/
             <item index="1" type="int64">901</item>
          </item>
       </attr>
-   </item>
-   <item index="2">
+      <desc>
+         <item index="0" type="string">来源1</item>
+         <item index="1" type="string">来源2</item>
+         <item index="2" type="string">来源4</item>
+      </desc>
       <icons>
+         <arm type="string">arm1002</arm>
          <face>
             <item index="0" type="string">face10010</item>
             <item index="1" type="string">face10011</item>
          </face>
-         <arm type="string">arm1003</arm>
       </icons>
-      <id type="number">1003.0</id>
-      <desc>
-         <item index="0" type="string">来源1</item>
-         <item index="1" type="string">来源2</item>
-         <item index="2" type="string">来源5</item>
-      </desc>
-      <name type="string">examp1003</name>
+      <id type="number">1002</id>
+      <name type="string">examp1002</name>
+   </item>
+   <item index="2">
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -96,22 +82,22 @@ http://www.python-excel.org/
             <item index="1" type="int64">902</item>
          </item>
       </attr>
-   </item>
-   <item index="3">
+      <desc>
+         <item index="0" type="string">来源1</item>
+         <item index="1" type="string">来源2</item>
+         <item index="2" type="string">来源5</item>
+      </desc>
       <icons>
+         <arm type="string">arm1003</arm>
          <face>
             <item index="0" type="string">face10010</item>
             <item index="1" type="string">face10011</item>
          </face>
-         <arm type="string">arm1004</arm>
       </icons>
-      <id type="number">1004.0</id>
-      <desc>
-         <item index="0" type="string">来源1</item>
-         <item index="1" type="string">来源2</item>
-         <item index="2" type="string">来源6</item>
-      </desc>
-      <name type="string">examp1004</name>
+      <id type="number">1003</id>
+      <name type="string">examp1003</name>
+   </item>
+   <item index="3">
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -126,5 +112,19 @@ http://www.python-excel.org/
             <item index="1" type="int64">903</item>
          </item>
       </attr>
+      <desc>
+         <item index="0" type="string">来源1</item>
+         <item index="1" type="string">来源2</item>
+         <item index="2" type="string">来源6</item>
+      </desc>
+      <icons>
+         <arm type="string">arm1004</arm>
+         <face>
+            <item index="0" type="string">face10010</item>
+            <item index="1" type="string">face10011</item>
+         </face>
+      </icons>
+      <id type="number">1004</id>
+      <name type="string">examp1004</name>
    </item>
 </example_hero>
