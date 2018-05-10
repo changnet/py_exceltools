@@ -3,12 +3,12 @@
 
 import os
 import time
-import importlib
+from writer import *
 from optparse import OptionParser
 
 from decoder import ExcelDoc
 
-class Loader:
+class Reader:
     # @input_path:excel文件所在目录
     # @srv_path  :server输出目录
     # @clt_path  :客户端输出目录
@@ -24,10 +24,12 @@ class Loader:
 
         self.srv_writer = None
         self.clt_writer = None
+
+        # json则对应的类为JsonWriter
         if None != srv_writer :
-            self.srv_writer = importlib.import_module( "writer_" + srv_writer )
+            self.srv_writer = eval( srv_writer.capitalize() + "Writer" )
         if None != clt_writer :
-            self.clt_writer = importlib.import_module( "writer_" + clt_writer )
+            self.clt_writer = eval( clt_writer.capitalize() + "Writer" )
 
     def attention(self):
         print("********excel转换********")
@@ -37,7 +39,7 @@ class Loader:
         print("**第一列为主键，不可重复。可以为字符串，为空则转换为数组")
         print("***************************************************\n")
 
-    def can_load(self,file,abspath):
+    def can_read(self,file,abspath):
         if not os.path.isfile( abspath ): return False
         # ~开头的excel文件是临时文件，linux下wps临时文件以.~开头
         # 永中office是$开头
@@ -53,8 +55,8 @@ class Loader:
 
         return True
 
-    def load(self):
-        print("load %s files from %s modified in the last %d seconds"
+    def read(self):
+        print("read %s files from %s modified in the last %d seconds"
             % (self.suffix,self.input_path,self.timeout))
 
         if None != self.srv_path and not os.path.exists( self.srv_path ) :
@@ -66,11 +68,11 @@ class Loader:
         file_list = os.listdir( options.input_path )
         for file in file_list:
             abspath = os.path.join( self.input_path,file )
-            if self.can_load( file,abspath ):self.load_one( file,abspath )
+            if self.can_read( file,abspath ):self.read_one( file,abspath )
 
         print( "done,%d second elapsed" % ( time.time() - now ) )
 
-    def load_one(self,file,abspath):
+    def read_one(self,file,abspath):
         doc = ExcelDoc( file,abspath )
         doc.decode( self.srv_path,
             self.clt_path,self.srv_writer,self.clt_writer )
@@ -91,7 +93,7 @@ if __name__ == '__main__':
                      help="only converte files modified within seconds" )
     parser.add_option( "-f", "--suffix", dest="suffix",
                      default="",
-                     help="what type of file will be loaded.empty mean all files" )
+                     help="what type of file will be readed.empty mean all files" )
     parser.add_option( "-w","--swriter", dest="srv_writer",
                      help="which server writer you wish to use:lua xml json" )
     parser.add_option( "-l","--cwriter", dest="clt_writer",
@@ -99,7 +101,7 @@ if __name__ == '__main__':
 
     options, args = parser.parse_args()
 
-    loader = Loader( options.input_path,options.srv_path,options.clt_path,
+    reader = Reader( options.input_path,options.srv_path,options.clt_path,
         options.timeout,options.suffix,options.srv_writer,options.clt_writer )
-    loader.attention()
-    loader.load()
+    reader.attention()
+    reader.read()

@@ -3,7 +3,6 @@
 
 import os
 import json
-import error
 import openpyxl
 from slpp.slpp import slpp as lua
 
@@ -48,15 +47,6 @@ class ValueConverter(object):
     def __init__(self):
         pass
 
-    # 在python中，字符串和unicode是不一样的。默认从excel读取的数据都是unicode。
-    # str可以通过decode转换为unicode
-    # ascii' codec can't encode characters
-    def to_unicode_str(self,val):
-        if isinstance( val,str ) :
-            return val
-        else :
-            return str( val ).decode("utf8")
-
     def to_value(self,val_type,val):
         if "int" == val_type :
             return int( val )
@@ -68,7 +58,7 @@ class ValueConverter(object):
             # if long( val ) == float( val ) : return long( val )
             return float( val )
         elif "string" == val_type :
-            return self.to_unicode_str( val )
+            return str( val )
         elif "json" == val_type :
             return json.loads( val )
         else :
@@ -114,7 +104,7 @@ class Sheet(object):
         # 有些配置可能只导出客户端或只导出服务器
         if not any(ctx) : return
 
-        wt = writer.Writer(self.base_name,self.wb_sheet.title)
+        wt = writer(self.base_name,self.wb_sheet.title)
 
         ctx = wt.context( ctx )
         suffix = wt.suffix()
