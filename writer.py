@@ -16,7 +16,7 @@ try:
 except NameError:
     long = int
 
-BASE_LENGTH = 120
+BASE_LENGTH = 80
 BASE_INDENT = "    "
 INDENT_LIST = {}
 
@@ -206,12 +206,17 @@ class LuaWriter(Writer):
         for v in value :
             is_indent,lv = self.to_lua( v,indent + 1 )
             if is_indent : any_indent = True
-            if not any_indent and total_len < BASE_LENGTH :
+            if not any_indent :
                 total_len = total_len + len( lv )
 
             list_ctx_list.append( lv )
 
         if any_indent :
+            # 处理{99,{a = 1,b = 2},"abc"}这种有些换行有些不换行的,把缩进补上
+            for k,v in enumerate( list_ctx_list ) :
+                if not v.startswith( BASE_INDENT ) :
+                    list_ctx_list[k] = next_indent + v
+
             # 子元素是dict或者list并且换了行，则都必须换行
             list_str = ",\n".join( list_ctx_list )
             return True,"".join(
@@ -223,14 +228,14 @@ class LuaWriter(Writer):
             cur_ctx = []
             line_ctx = []
             for ctx in list_ctx_list :
-                cur_len = len(ctx)
+                # +1是算上后面的增加的","
+                cur_len += len(ctx) + 1
                 cur_ctx.append( ctx )
                 if cur_len >= BASE_LENGTH :
                     line_ctx.append( ",".join( cur_ctx ) )
                     cur_len = 0
                     cur_ctx = []
             if any(cur_ctx) : line_ctx.append( ",".join( cur_ctx ) )
-
             sep = ",\n" + next_indent
             list_str = sep.join( line_ctx )
             return True,"".join(
