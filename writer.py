@@ -16,7 +16,8 @@ try:
 except NameError:
     long = int
 
-BASE_LENGTH = 80
+# 加上不确定的层级缩进，60比较合适
+BASE_LENGTH = 60
 BASE_INDENT = "    "
 INDENT_LIST = {}
 
@@ -172,6 +173,9 @@ class LuaWriter(Writer):
 
         cur_indent = self.indent_ctx(indent)
         next_indent = self.indent_ctx(indent + 1)
+
+        total_len = 0
+        any_indent = False
         # 需要对key排序，不然每次导出的字段是乱的，对版本管理不友好
         for k in sorted( value ) :
             k_indent,lk = self.to_lua( k,indent )
@@ -182,18 +186,23 @@ class LuaWriter(Writer):
 
             # 子类型有缩进，则必须换行
             if is_indent :
+                any_indent = True
                 val = "".join( [key," =","\n",lv] )
             else :
                 val = "".join( [key," = ",lv] )
 
             dict_ctx_list.append( val )
+            if not any_indent : total_len += len(val)
 
-        # dict的话都换行，不换行不好看
-        sep = ",\n" + next_indent
-        dict_str = sep.join( dict_ctx_list )
-
-        return True,"".join(
-            [cur_indent,"{\n",next_indent,dict_str,"\n",cur_indent,"}"])
+        # 是否换行
+        if any_indent or total_len > BASE_LENGTH :
+            sep = ",\n" + next_indent
+            dict_str = sep.join( dict_ctx_list )
+            return True,"".join(
+                [cur_indent,"{\n",next_indent,dict_str,"\n",cur_indent,"}"])
+        else :
+            dict_str = ",".join( dict_ctx_list )
+            return False,"".join( ["{",dict_str,"}"] )
 
     # list转换为lua类型
     def list_to_lua(self,value,indent):
@@ -229,12 +238,13 @@ class LuaWriter(Writer):
             line_ctx = []
             for ctx in list_ctx_list :
                 # +1是算上后面的增加的","
-                cur_len += len(ctx) + 1
-                cur_ctx.append( ctx )
-                if cur_len >= BASE_LENGTH :
+                one_len = len(ctx) + 1
+                if cur_len + one_len > BASE_LENGTH :
                     line_ctx.append( ",".join( cur_ctx ) )
                     cur_len = 0
                     cur_ctx = []
+                cur_len += one_len
+                cur_ctx.append( ctx )
             if any(cur_ctx) : line_ctx.append( ",".join( cur_ctx ) )
             sep = ",\n" + next_indent
             list_str = sep.join( line_ctx )
