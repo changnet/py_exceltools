@@ -16,6 +16,12 @@ try:
 except NameError:
     long = int
 
+# python3中没有unicode了
+try:
+    unicode
+except NameError:
+    unicode = str
+
 # 加上不确定的层级缩进，60比较合适
 BASE_LENGTH = 60
 BASE_INDENT = "    "
@@ -120,7 +126,7 @@ class XmlWriter(Writer):
                 sub_node = self.doc.createTextNode( str( long( value ) ) )
             else:
                 sub_node = self.doc.createTextNode( str( value ) )
-        elif str == val_type :
+        elif str == val_type or unicode == val_type :
             val_type_str = "string"
             sub_node = self.doc.createTextNode( value )
         elif dict == val_type :
@@ -268,7 +274,7 @@ class LuaWriter(Writer):
             if int( value ) == value :
                 return False,str( int(value) )
             return False,str( value )
-        elif str == val_type :
+        elif str == val_type or unicode == val_type:
             # 字符串要用单引号，因为Lua里单引号级别比双引号高
             return False,"".join(["'",value,"'"])
         elif dict == val_type :

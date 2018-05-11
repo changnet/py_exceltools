@@ -2,8 +2,10 @@
 # -*- coding:utf-8 -*-
 
 import os
+import sys
 import json
 import openpyxl
+
 from slpp.slpp import slpp as lua
 
 # 数组模式下，各个栏的分布
@@ -37,15 +39,34 @@ try:
 except NameError:
     basestring = str
 
+# python3中没有uincode了，int能表示int64
 try:
     long
 except NameError:
     long = int
 
+# python3中没有unicode了
+try:
+    unicode
+except NameError:
+    unicode = str
+
 # 类型转换器
 class ValueConverter(object):
     def __init__(self):
         pass
+
+    # 在python中，字符串和unicode是不一样的。默认从excel读取的数据都是unicode。
+    # str可以通过decode转换为unicode
+    # ascii' codec can't encode characters
+    # 这个函数在python3中没用
+    def to_unicode_str( self,val ):
+        if isinstance( val,str ) :
+            return val
+        elif isinstance( val,unicode ) :
+            return val
+        else :
+            return str( val ).decode("utf8")
 
     def to_value(self,val_type,val):
         if "int" == val_type :
@@ -58,7 +79,7 @@ class ValueConverter(object):
             # if long( val ) == float( val ) : return long( val )
             return float( val )
         elif "string" == val_type :
-            return str( val )
+            return self.to_unicode_str( val )
         elif "json" == val_type :
             return json.loads( val )
         elif "lua" == val_type :

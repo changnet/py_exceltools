@@ -13,6 +13,8 @@ linux安装
 
     apt-get install python-pip
     pip install openpyxl
+    git clone https://github.com/changnet/py_exceltools.git
+    git git submodule update --init --recursive
 
 ps:
 ```
@@ -20,24 +22,12 @@ ps:
 尝试：pip install openpyxl --index-url=https://pypi.python.org/simple/
 ```
 
-```
-    Using bundled Lua
-    building without Cython
-    Traceback (most recent call last):
-      File "<string>", line 1, in <module>
-      File "C:\Users\dell\AppData\Local\Temp\pip-install-ai_up66r\lupa\setup.py", line 308, in <module>
-        for text_file in ['README.rst', 'INSTALL.rst', 'CHANGES.rst', "LICENSE.txt"]])
-      File "C:\Users\dell\AppData\Local\Temp\pip-install-ai_up66r\lupa\setup.py", line 308, in <listcomp>
-        for text_file in ['README.rst', 'INSTALL.rst', 'CHANGES.rst', "LICENSE.txt"]])
-      File "C:\Users\dell\AppData\Local\Temp\pip-install-ai_up66r\lupa\setup.py", line 298, in read_file
-        return f.read()
-    UnicodeDecodeError: 'gbk' codec can't decode byte 0x93 in position 1183: illegal multibyte sequence
-```
-
 win安装
 
     安装python(同时安装pip并添加到Path):https://www.python.org/downloads/windows/
     安装openpyxl,在cmd中运行:pip install openpyxl
+    git clone https://github.com/changnet/py_exceltools.git
+    git git submodule update --init --recursive
 
 # 使用
     lancher.bat(win)和lancher.sh(linux)为对应运行脚本。
@@ -70,18 +60,4 @@ pyinstaller不能直接生成完整的exe，需要使用hiddenimports。loader.s
 * 工具会检测server和client标识。如果不存在，则不导出些表。方便策划做备注
 
 # 二次开发
-新增的writer必须提供以下接口:
-```python
-class Writer:
-
-    def __init__(self,,sheet_name,row_offset,col_offset):
-        pass
-    def suffix(self):
-        pass
-    def object_content(self,types,fields,rows):
-        pass
-    def array_content(self,types,fields,rows):
-        pass
-```
-
-
+如果你要新增加导出的格式，则参考writer.py中json、xml、lua的实现即可
