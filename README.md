@@ -44,6 +44,9 @@ win安装
 
     注：对于client和server，如果未配置输出目录或转换器，则不会导出。
 
+# 数据类型
+    支持int(int64)、number(float)、string、json、lua
+
 # 打包exe
 部署时，可以将python打包成exe。建议使用pyinstaller。截止发版时(2017-07-29),由于最新的
 pyinstaller3.2.1尚不支持python3.6.1，建议使用python 3.5。
