@@ -85,7 +85,7 @@ class ValueConverter(object):
         elif "lua" == val_type :
             return lua.decode( val )
         else :
-            raise Exception( "invalid type",val_type )
+            self.raise_error( "invalid type",value )
 
 # 继承object类，以解决在python2中的错误：TypeError: must be type, not classobj
 class Sheet(object):
@@ -103,6 +103,28 @@ class Sheet(object):
 
         self.wb_sheet  = wb_sheet
         self.base_name = base_name
+
+        # 记录出错时的行列，方便策划定位问题
+        self.error_row = 0
+        self.error_col = 0
+
+    # 记录出错位置
+    def mark_error_pos(self,row,col):
+        if row > 0 : self.error_row = row
+        if col > 0 : self.error_col = col
+
+    # 发起一个解析错误
+    def raise_error(self,what,val):
+        excel_info = format("DOC:%s,SHEET:%s,ROW:%d,COLUMN:%d" % \
+            (self.base_name,self.wb_sheet.title,self.error_row,self.error_col))
+        raise Exception( what,val,excel_info )
+
+    def to_value(self,val_type,val):
+        try:
+            return self.converter.to_value(val_type,val)
+        except Exception :
+            t, e = sys.exc_info()[:2]
+            self.raise_error( "ConverError",e )
 
     # 解析一个表格
     def decode_sheet(self):
@@ -161,14 +183,14 @@ class ArraySheet(Sheet):
         # 第一列没数据，类型可以不填，默认为None，但是这里要占个位
         self.types.append( None )
 
-        for col_index in range( AKEY_COL + 1,self.wb_sheet.max_column + 1 ):
-            value = self.wb_sheet.cell( row = ATPE_ROW, column = col_index ).value
+        for col_idx in range( AKEY_COL + 1,self.wb_sheet.max_column + 1 ):
+            self.mark_error_pos(ATPE_ROW,col_idx)
+            value = self.wb_sheet.cell( row = ATPE_ROW, column = col_idx ).value
 
             # 单元格为空的时候，wb_sheet.cell(row=1, column=2).value == None
             # 类型那一行必须连续，空白表示后面的数据都不导出了
             if value == None: break
-            if not TYPES[value]:
-                raise Exception( "invalid type",value )
+            if value not in TYPES: self.raise_error( "invalid type",value )
 
             self.types.append( value )
 
@@ -187,7 +209,8 @@ class ArraySheet(Sheet):
         if not value: return None
 
         # 类型是从0下标开始，但是excel的第一列从1开始
-        return self.converter.to_value( self.types[col_idx - 1],value )
+        self.mark_error_pos( row_idx,col_idx )
+        return self.to_value( self.types[col_idx - 1],value )
 
     # 解析出一行的内容
     def decode_row(self,row_idx):
@@ -229,14 +252,13 @@ class ObjectSheet(Sheet):
 
     # 解析各字段的类型
     def decode_type(self):
-        for row_index in range( OFLG_ROW + 1,self.wb_sheet.max_row + 1 ):
-            value = self.wb_sheet.cell(
-                row = row_index, column = OTPE_COL ).value
+        for row_idx in range( OFLG_ROW + 1,self.wb_sheet.max_row + 1 ):
+            self.mark_error_pos( row_idx,OTPE_COL)
+            value = self.wb_sheet.cell( row = row_idx, column = OTPE_COL ).value
 
             # 类型必须连续，遇到空则认为后续数据不再导出
             if value == None: break
-            if not TYPES[value]:
-                raise Exception( "invalid type",value )
+            if value not in TYPES : self.raise_error( "invalid type",value )
 
             self.types.append( value )
 
@@ -254,7 +276,8 @@ class ObjectSheet(Sheet):
         if not value : return None
 
         # 在object的结构中，数据是从第二行开始的，所以types的下标偏移2
-        return self.converter.to_value( self.types[row_idx - 2],value )
+        self.mark_error_pos( row_idx,OCTX_COL )
+        return self.to_value( self.types[row_idx - 2],value )
 
     def decode_ctx(self):
         # 第一行为flag行，包括最后一行，所以要types + 2
