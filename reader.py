@@ -56,8 +56,11 @@ class Reader:
         return True
 
     def read(self):
-        print("read %s files from %s modified in the last %d seconds"
-            % (self.suffix,self.input_path,self.timeout))
+        if self.timeout > 0 :
+            print("read %s files from %s modified \
+                within %d seconds" % (self.suffix,self.input_path,self.timeout))
+        else :
+            print("read %s files from %s" % (self.suffix,self.input_path))
 
         if None != self.srv_path and not os.path.exists( self.srv_path ) :
             os.makedirs( self.srv_path )
@@ -70,7 +73,7 @@ class Reader:
             abspath = os.path.join( self.input_path,file )
             if self.can_read( file,abspath ):self.read_one( file,abspath )
 
-        print( "done,%d second elapsed" % ( time.time() - now ) )
+        print( "done,%d seconds elapsed" % ( time.time() - now ) )
 
     def read_one(self,file,abspath):
         doc = ExcelDoc( file,abspath )
