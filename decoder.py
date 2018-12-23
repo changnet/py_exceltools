@@ -206,7 +206,7 @@ class ArraySheet(Sheet):
     # 解析出一个格子的内容
     def decode_cell(self,row_idx,col_idx):
         value = self.wb_sheet.cell( row = row_idx, column = col_idx ).value
-        if not value: return None
+        if None == value: return None
 
         # 类型是从0下标开始，但是excel的第一列从1开始
         self.mark_error_pos( row_idx,col_idx )
@@ -220,7 +220,7 @@ class ArraySheet(Sheet):
         # 第一列没数据，从第二列开始解析
         for col_idx in range( AKEY_COL + 1,len( self.types ) + 1 ):
             value = self.decode_cell( row_idx,col_idx )
-            if not value : continue
+            if None == value : continue
 
             srv_key = self.srv_fields[col_idx - 1]
             clt_key = self.clt_fields[col_idx - 1]
@@ -273,7 +273,7 @@ class ObjectSheet(Sheet):
     # 解析一个单元格内容
     def decode_cell(self,row_idx):
         value = self.wb_sheet.cell( row = row_idx, column = OCTX_COL ).value
-        if not value : return None
+        if None == value : return None
 
         # 在object的结构中，数据是从第二行开始的，所以types的下标偏移2
         self.mark_error_pos( row_idx,OCTX_COL )
@@ -283,7 +283,7 @@ class ObjectSheet(Sheet):
         # 第一行为flag行，包括最后一行，所以要types + 2
         for row_idx in range( OFLG_ROW + 1,len( self.types ) + 2 ):
             value = self.decode_cell( row_idx )
-            if not value : continue
+            if None == value : continue
 
             srv_key = self.srv_fields[row_idx - 2]
             clt_key = self.clt_fields[row_idx - 2]

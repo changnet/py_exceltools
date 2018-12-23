@@ -9,6 +9,7 @@ from example_weapon
 
 return
 {
+    {['id'] = 0,['level'] = 1,['name'] = 'test_name'},
     {
         ['attr'] = {{1,700},{2,800},{3,900}},
         ['id'] = 1001,

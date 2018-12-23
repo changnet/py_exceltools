@@ -10,6 +10,11 @@ from example_weapon
 <?xml version="1.0" ?>
 <example_weapon>
    <item index="0">
+      <id type="int64">0</id>
+      <level type="int64">1</level>
+      <name type="string">test_name</name>
+   </item>
+   <item index="1">
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -29,7 +34,7 @@ from example_weapon
       <level type="int64">85</level>
       <name type="string">荒古遗尘光剑</name>
    </item>
-   <item index="1">
+   <item index="2">
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -49,7 +54,7 @@ from example_weapon
       <level type="int64">85</level>
       <name type="string">巴鲁姆克之剑</name>
    </item>
-   <item index="2">
+   <item index="3">
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -69,7 +74,7 @@ from example_weapon
       <level type="int64">85</level>
       <name type="string">雷剑 - 苦轮</name>
    </item>
-   <item index="3">
+   <item index="4">
       <attr>
          <item index="0">
             <item index="0" type="int64">1</item>
@@ -89,136 +94,136 @@ from example_weapon
       <level type="int64">80</level>
       <name type="string">王之悲鸣</name>
    </item>
-   <item index="4">
+   <item index="5">
       <desc type="string">*Lv74~81深渊地下城怪物掉落*攻坚队完成安徒恩团队模式的[讨伐安徒恩]任务时，获得的奖励。</desc>
       <id type="int64">1005</id>
       <level type="int64">75</level>
       <name type="string">歃血之怨</name>
    </item>
-   <item index="5">
+   <item index="6">
       <desc type="string">*Lv69~76深渊地下城怪物掉落*攻坚队完成安徒恩团队模式的[讨伐安徒恩]任务时，获得的奖励。*歌兰蒂斯·格拉西亚 出售 (宇宙灵魂×330)</desc>
       <id type="int64">1006</id>
       <level type="int64">70</level>
       <name type="string">冰龙之愤怒</name>
    </item>
-   <item index="6">
+   <item index="7">
       <desc type="string">*Lv64~71深渊地下城怪物掉落*在NPC沉默之克雷娅的物品店购买</desc>
       <id type="int64">1007</id>
       <level type="int64">65</level>
       <name type="string">火焰刃 - 布兰兹</name>
    </item>
-   <item index="7">
+   <item index="8">
       <id type="int64">1008</id>
       <level type="int64">60</level>
       <name type="string">血之挽歌</name>
    </item>
-   <item index="8">
+   <item index="9">
       <desc type="string">*Lv59~66深渊地下城怪物掉落*攻坚队完成安徒恩团队模式的[讨伐安徒恩]任务时，获得的奖励。*歌兰蒂斯·格拉西亚 出售 (宇宙灵魂×230)</desc>
       <id type="int64">1009</id>
       <level type="int64">60</level>
       <name type="string">无轩之散魄</name>
    </item>
-   <item index="9">
+   <item index="10">
       <id type="int64">1010</id>
       <level type="int64">55</level>
       <name type="string">天脊骨狱息</name>
    </item>
-   <item index="10">
+   <item index="11">
       <id type="int64">1011</id>
       <level type="int64">55</level>
       <name type="string">千年之光</name>
    </item>
-   <item index="11">
+   <item index="12">
       <desc type="string">*决斗场-爱莎&amp;鹰吉&amp;风铃 出售*设计图（爱莎&amp;鹰吉&amp;风铃 出售）</desc>
       <id type="int64">1012</id>
       <level type="int64">85</level>
       <name type="string">武动之魂光剑</name>
    </item>
-   <item index="12">
+   <item index="13">
       <desc type="string">*公爵尤里斯 掉落(地下城: 痛苦之村列瑟芬 5图)*设计图(地下城 痛苦之村列瑟芬 登场的NPC加百利 出售)</desc>
       <id type="int64">1013</id>
       <level type="int64">85</level>
       <name type="string">邪影污灵剑</name>
    </item>
-   <item index="13">
+   <item index="14">
       <desc type="string">*光之沃德咯斯 掉落(地下城: 王的遗迹 5图)*设计图(地下城 王的遗迹 登场的NPC加百利 出售)</desc>
       <id type="int64">1014</id>
       <level type="int64">85</level>
       <name type="string">炽光之剑</name>
    </item>
-   <item index="14">
+   <item index="15">
       <desc type="string">*昨日之巴斯顿 掉落 (在远古地下城里出没。）*从NPC鲁特的物品店出售的[西部无法者武器礼盒]中获得*船长鲁特 出售 (气吞山河图×100)</desc>
       <id type="int64">1015</id>
       <level type="int64">85</level>
       <name type="string">西部无法者的光剑</name>
    </item>
-   <item index="15">
+   <item index="16">
       <desc type="string">*昨日之巴斯顿 掉落 (在远古地下城里出没。）*从NPC鲁特的物品店出售的[格拉西亚家族遗物武器礼盒]中获得*格拉西亚家族遗物任务奖励 (地下城:诺伊佩拉 , NPC: 歌兰蒂斯·格拉西亚)</desc>
       <id type="int64">1016</id>
       <level type="int64">85</level>
       <name type="string">格拉西亚家族遗物 - 光剑</name>
    </item>
-   <item index="16">
+   <item index="17">
       <desc type="string">*巨斧克洛 掉落(地下城: 能量阻截战 7图)*设计图(安徒恩 地下城 登场的NPC加百利 出售)</desc>
       <id type="int64">1017</id>
       <level type="int64">85</level>
       <name type="string">浸夜之余晖</name>
    </item>
-   <item index="17">
+   <item index="18">
       <desc type="string">*决斗场-爱莎&amp;鹰吉&amp;风铃 出售*设计图（爱莎&amp;鹰吉&amp;风铃 出售）</desc>
       <id type="int64">1018</id>
       <level type="int64">85</level>
       <name type="string">真·灵斗者专属的光剑</name>
    </item>
-   <item index="18">
+   <item index="19">
       <desc type="string">*巨灵布鲁 掉落(地下城: 魂：幽灵列车 5图)*设计图(地下城 魂：幽灵列车 登场的NPC加百利 出售)</desc>
       <id type="int64">1019</id>
       <level type="int64">85</level>
       <name type="string">邪念之息 - 暗涌</name>
    </item>
-   <item index="19">
+   <item index="20">
       <desc type="string">*设计图 (时空之门地区 - 吟游诗人艾丽丝 出售)</desc>
       <id type="int64">1020</id>
       <level type="int64">85</level>
       <name type="string">释魂之真灵光剑</name>
    </item>
-   <item index="20">
+   <item index="21">
       <desc type="string">*时空之门地区 - 吟游诗人艾丽丝 出售 (镇魂之石×100)*购买镇魂武器礼盒(低级镇魂之石×140)</desc>
       <id type="int64">1021</id>
       <level type="int64">85</level>
       <name type="string">镇魂之封灵光剑</name>
    </item>
-   <item index="21">
+   <item index="22">
       <desc type="string">*决斗场-爱莎&amp;鹰吉&amp;风铃 出售*设计图（爱莎&amp;鹰吉&amp;风铃 出售）</desc>
       <id type="int64">1022</id>
       <level type="int64">80</level>
       <name type="string">灵斗者专属的光剑</name>
    </item>
-   <item index="22">
+   <item index="23">
       <desc type="string">*虚空之弗曼 掉落(地下城: 格兰迪发电站)*在NPC佩拉·维恩的物品店购买(燃烧的陨石×555)</desc>
       <id type="int64">1023</id>
       <level type="int64">80</level>
       <name type="string">灼魂之剑</name>
    </item>
-   <item index="23">
+   <item index="24">
       <desc type="string">*骷髅骑士 掉落(地下城: 瘟疫之源)*在NPC西岚的物品店购买(银色陨石×465)</desc>
       <id type="int64">1024</id>
       <level type="int64">70</level>
       <name type="string">骷髅骑士之魂</name>
    </item>
-   <item index="24">
+   <item index="25">
       <desc type="string">*纵火犯本汀克 掉落(地下城: 根特外围)*在NPC泽丁·施奈德的物品店购买 (黑色陨石×375)</desc>
       <id type="int64">1025</id>
       <level type="int64">60</level>
       <name type="string">纵火犯本汀克的喷火器</name>
    </item>
-   <item index="25">
+   <item index="26">
       <desc type="string">*领主-光之城主赛格哈特 掉落(地下城: 极光幻境)*在NPC敏泰的物品店购买(阿拉德陨石×285)</desc>
       <id type="int64">1026</id>
       <level type="int64">50</level>
       <name type="string">精铸的翼影之光</name>
    </item>
-   <item index="26">
+   <item index="27">
       <desc type="string">*爆炎剑.巴塔路西斯&amp;爆炎师.巴塔路西斯&amp;爆炎拳.巴塔路西斯 掉落(地下城: 远古墓穴深处)*在NPC克伦特的物品店购买(阿拉德陨石 ×150)</desc>
       <id type="int64">1027</id>
       <level type="int64">35</level>
