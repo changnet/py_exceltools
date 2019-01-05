@@ -55,6 +55,8 @@ pyinstaller3.2.1尚不支持python3.6.1，建议使用python 3.5。
     pyinstaller -F -c reader.py
 
 # 建议
+* 文件命名支持 mmmnnn.xlsx的方式。mmm可以是任意字符，nnn只能是数字和字母，导出的配置以
+nnn做为前缀，当然也可以只用nnn.xlsx。例如:Y_样本_example.xlsx，方便管理文件
 * 在string中无法直接使用换行等特殊称号。请用\n等转义字符替代。
 * 设置表结构时，数据尽量偏平化。例如一个玩家身上有8种装备，不应该配8个表，而是在装备表中加一个字段pos
 * 由于xml并不存在数组等结构，不建议使用。

@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import os
+import re
 import sys
 import json
 import openpyxl
@@ -104,6 +105,13 @@ class Sheet(object):
         self.wb_sheet  = wb_sheet
         self.base_name = base_name
 
+        # J-战斗_battle.xlsx 分解得到battle，不带后缀，
+        match_list = re.findall("[a-zA-Z0-9]+$",base_name)
+        if None == match_list or 1 != len(match_list):
+            Exception( base_name,"not a legal file name" )
+
+        self.base_file_name = match_list[0]
+
         # 记录出错时的行列，方便策划定位问题
         self.error_row = 0
         self.error_col = 0
@@ -155,7 +163,8 @@ class Sheet(object):
         suffix = wt.suffix()
 
         #必须为wb，不然无法写入utf-8
-        path = base_path + self.base_name + "_" + self.wb_sheet.title + suffix
+        path = base_path + self.base_file_name\
+            + "_" + self.wb_sheet.title + suffix
         file = open( path, 'wb' )
         file.write( ctx.encode( "utf-8" ) )
         file.close()
