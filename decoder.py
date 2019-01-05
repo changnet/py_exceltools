@@ -9,20 +9,23 @@ import openpyxl
 
 from slpp.slpp import slpp as lua
 
-# 数组模式下，各个栏的分布
-ACMT_ROW = 1  # comment row 注释
-ATPE_ROW = 2  # type    row 类型
-ASRV_ROW = 3  # server  row 服务器
-ACLT_ROW = 4  # client  row 客户端
+# array数组模式下，各个栏的分布
+# 1、2行是文档注释，不导出
+ACMT_ROW = 3  # comment row 注释
+ATPE_ROW = 4  # type    row 类型
+ASRV_ROW = 5  # server  row 服务器
+ACLT_ROW = 6  # client  row 客户端
 AKEY_COL = 1  # key  column key所在列
 
-# kv模式下，各个栏的分布
+# object(kv)模式下，各个栏的分布
 OCMT_COL = 1  # comment column 注释
 OTPE_COL = 2  # type    column 类型
 OSRV_COL = 3  # server  column 服务器
 OCLT_COL = 4  # client  column 客户端
 OCTX_COL = 5  # content column 内容所在列
-OFLG_ROW = 1  # flag    row    server client所在行
+
+# 1、2行是文档注释，不导出
+OFLG_ROW = 3  # flag    row    server client所在行
 
 SRV_FLAG = "server"
 CLT_FLAG = "client"
