@@ -29,7 +29,8 @@ INDENT_LIST = {}
 
 class Writer(object):
     def __init__(self,doc_name,sheet_name):
-        self.doc_name   = doc_name
+        # 文件名包含中文则需要转unicode
+        self.doc_name   = unicode(doc_name, "utf-8")
         self.sheet_name = sheet_name
 
     # 文件后缀

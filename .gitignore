@@ -9,6 +9,11 @@ __pycache__/
 # yongzhong office temp file
 $*
 
+# xlsx temp file
+~*.xlsx
+.~*.xlsx
+
+
 # Distribution / packaging
 .Python
 env/
