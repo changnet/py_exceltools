@@ -38,23 +38,6 @@ OBJECT_FLAG = "object"
 
 TYPES = { "int":1,"number":2,"int64":3,"string":4,"json":5,"lua":6 }
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
-# python3中没有uincode了，int能表示int64
-try:
-    long
-except NameError:
-    long = int
-
-# python3中没有unicode了
-try:
-    unicode
-except NameError:
-    unicode = str
-
 # 类型转换器
 class ValueConverter(object):
     def __init__(self):
@@ -67,8 +50,6 @@ class ValueConverter(object):
     def to_unicode_str( self,val ):
         if isinstance( val,str ) :
             return val
-        elif isinstance( val,unicode ) :
-            return val
         else :
             return str( val ).decode("utf8")
 
@@ -76,7 +57,7 @@ class ValueConverter(object):
         if "int" == val_type :
             return int( val )
         elif "int64" == val_type :
-            return long( val )
+            return int( val )
         elif "number" == val_type :
             # 去除带小数时的小数点，100.0 ==>> 100
             # number就让它带小数点吧，不然强类型的配置无法正确识别出来

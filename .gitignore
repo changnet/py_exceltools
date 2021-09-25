@@ -12,6 +12,7 @@ $*
 # xlsx temp file
 ~*.xlsx
 .~*.xlsx
+.~*.xlsx#
 
 
 # Distribution / packaging

@@ -6,22 +6,6 @@ import sys
 import json
 from xml.dom.minidom import Document
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
-try:
-    long
-except NameError:
-    long = int
-
-# python3中没有unicode了
-try:
-    unicode
-except NameError:
-    unicode = str
-
 # 加上不确定的层级缩进，60比较合适
 BASE_LENGTH = 60
 BASE_INDENT = "    "
@@ -29,8 +13,9 @@ INDENT_LIST = {}
 
 class Writer(object):
     def __init__(self,doc_name,sheet_name):
-        # 文件名包含中文则需要转unicode
-        self.doc_name   = unicode(doc_name, "utf-8")
+        # 文件名包含中文则需要转utf8
+
+        self.doc_name   = doc_name
         self.sheet_name = sheet_name
 
     # 文件后缀
@@ -114,20 +99,16 @@ class XmlWriter(Writer):
         val_type_str = None
         val_type = type( value )
         if int == val_type :
-            # python3中没有Long类型，int64也用int表示
-            val_type_str = "int64"
-            sub_node = self.doc.createTextNode( str( value ) )
-        elif long == val_type :
             val_type_str = "int64"
             sub_node = self.doc.createTextNode( str( value ) )
         elif float == val_type :
             val_type_str = "number"
             # 去除带小数时的小数点，100.0 ==>> 100
-            if long( value ) == float( value ) :
-                sub_node = self.doc.createTextNode( str( long( value ) ) )
+            if int( value ) == float( value ) :
+                sub_node = self.doc.createTextNode( str( int( value ) ) )
             else:
                 sub_node = self.doc.createTextNode( str( value ) )
-        elif str == val_type or unicode == val_type :
+        elif str == val_type :
             val_type_str = "string"
             sub_node = self.doc.createTextNode( value )
         elif dict == val_type :
@@ -268,14 +249,12 @@ class LuaWriter(Writer):
         val_type = type( value )
         if int == val_type :
             return False,str( value )
-        elif long == val_type :
-            return False,str( value )
         elif float == val_type :
             # 1001.0 -->> 001 去除多余小数点
             if int( value ) == value :
                 return False,str( int(value) )
             return False,str( value )
-        elif str == val_type or unicode == val_type:
+        elif str == val_type :
             # 字符串要用单引号，因为Lua里单引号级别比双引号高
             return False,"".join(["'",value,"'"])
         elif dict == val_type :

@@ -41,12 +41,15 @@ class Reader:
 
     def can_read(self,file,abspath):
         if not os.path.isfile( abspath ): return False
-        # ~开头的excel文件是临时文件，linux下wps临时文件以.~开头
+        # ~开头的excel文件是临时文件
+        # linux下wps临时文件以.~开头
         # 永中office是$开头
+        # 这些文件都忽略掉
         if file.startswith( "~" ) \
             or file.startswith( "." ) or file.startswith( "$" ): return False
         if "" != self.suffix and not file.endswith( self.suffix ): return False
 
+        # 按修改时间导出
         if self.timeout > 0:
             now = time.time()
             mtime = os.path.getmtime( abspath )
