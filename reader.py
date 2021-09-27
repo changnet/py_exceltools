@@ -32,12 +32,8 @@ class Reader:
             self.clt_writer = eval( clt_writer.capitalize() + "Writer" )
 
     def attention(self):
-        print("********excel转换********")
-        print("**第1、2行为注释，不会被导出")
-        print("**数据类型，支持int、number、int64、string、json、lua")
-        print("**server字段名表示服务端是否导出该配置，为空则不导出该字段")
-        print("**client字段名表示客户端是否导出该配置，为空则不导出该字段")
-        print("***************************************************\n")
+        # print("********excel转换********")
+        pass
 
     def can_read(self,file,abspath):
         if not os.path.isfile( abspath ): return False
