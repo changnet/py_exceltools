@@ -6,6 +6,7 @@ import re
 import sys
 import json
 import openpyxl
+import pathlib
 
 from slpp.slpp import slpp as lua
 
@@ -49,37 +50,50 @@ INT_RE = re.compile(r"^[-]?\d+$")
 def is_int_str(s):
     return INT_RE.match(s) is not None
 
-# 类型转换器
+# 如果不是字符串，则转换为字符串
+def to_unicode_str(val):
+    if isinstance(val, str):
+        return val
+    else:
+        return str(val)
 
-
-class ValueConverter(object):
-    def __init__(self):
-        pass
-
-    # 在python中，字符串和unicode是不一样的。默认从excel读取的数据都是unicode。
-    # str可以通过decode转换为unicode
-    # ascii' codec can't encode characters
-    # 这个函数在python3中没用
-    def to_unicode_str(self, val):
-        if isinstance(val, str):
+# 根据配置类型，把值转换为对应的数据类型
+def to_type_value(val_type, val):
+    # openpyxl 返回的value有多种类型，需要我们自己转换
+    if None == val:
+        return None
+    elif "num" == val_type:
+        if isinstance(val, int) or isinstance(val, float):
             return val
-        else:
-            return str(val).decode("utf8")
 
-    def to_value(self, val_type, val):
-        if "num" == val_type:
-            if is_int_str(val):
-                return int(val)
+        if is_int_str(val):
+            return int(val)
 
-            return float(val)
-        elif "str" == val_type:
-            return self.to_unicode_str(val)
-        elif "json" == val_type:
-            return json.loads(val)
-        elif "lua" == val_type:
-            return lua.decode(val)
-        else:
-            self.raise_error("invalid type", val_type)
+        return float(val)
+    elif "str" == val_type:
+        return to_unicode_str(val)
+    elif "json" == val_type:
+        # 空的json结构不导出，避免占用不必要的内存
+        if "[]" == val or "{}" == val:
+            return None
+
+        return json.loads(val)
+    elif "lua" == val_type:
+        # 空的lua结构不导出，避免占用不必要的内存
+        if "{}" == val:
+            return None
+
+        return lua.decode(val)
+    else:
+        raise_error("invalid type", val_type)
+
+# 导出字段的名字、参数等
+class Field(object):
+
+    def __init__(self, t, o, n):
+        self.name = n
+        self.opt  = o
+        self.type = t
 
 # 继承object类，以解决在python2中的错误：TypeError: must be type, not classobj
 
@@ -87,21 +101,17 @@ class ValueConverter(object):
 class Sheet(object):
 
     def __init__(self, base_name, wb_sheet, index, srv_writer, clt_writer):
-        self.types = []  # 记录各列字段的类型
-
         self.srv_writer = srv_writer
         self.clt_writer = clt_writer
 
         self.fields = []  # 各列字段名
         self.index = index  # 索引数量，0表示kv模式
 
-        self.converter = ValueConverter()
-
         self.wb_sheet = wb_sheet
         self.base_name = base_name
 
         self.dir_path = None  # 导出目录
-        self.file_path = None  # 卖出文件名
+        self.file_path = None  # 导出文件名
 
         # 记录出错时的行列，方便定位问题
         self.error_row = 0
@@ -122,7 +132,7 @@ class Sheet(object):
 
     def to_value(self, val_type, val):
         try:
-            return self.converter.to_value(val_type, val)
+            return to_type_value(val_type, val)
         except Exception:
             t, e = sys.exc_info()[:2]
             self.raise_error("ConverError", e)
@@ -139,8 +149,7 @@ class Sheet(object):
         wb_sheet = self.wb_sheet
 
         self.decode_info()  # 解析基础信息，如目录、导出文件名等
-        self.decode_type()  # 解析字段类型，num、str等
-        self.decode_opt()  # 解析导出参数，是否导出服务端、客户端
+        self.decode_field()  # 解析字段类型、导出参数，是否导出服务端、客户端
         self.decode_ctx()  # 解析内容
 
         print("    decode sheet %s done" % wb_sheet.title.ljust(24, "."))
@@ -157,9 +166,14 @@ class Sheet(object):
         ctx = wt.context(ctx)
         suffix = wt.suffix()
 
+        # 创建目录
+        dir_path = base_path
+        if self.dir_path: dir_path = dir_path + self.dir_path
+
+        pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
+
         # 必须为wb，不然无法写入utf-8
-        path = base_path + self.base_file_name\
-            + "_" + self.wb_sheet.title + suffix
+        path = dir_path + self.file_path + suffix
         file = open(path, 'wb')
         file.write(ctx.encode("utf-8"))
         file.close()
@@ -184,7 +198,7 @@ class ArraySheet(Sheet):
         super(ArraySheet, self).__init__(
             base_name, wb_sheet, srv_writer, clt_writer)
 
-    # 解析各列的类型(string、number...)
+    # 解析各列的类型(str、num...)
     def decode_type(self):
         # 第一列没数据，类型可以不填，默认为None，但是这里要占个位
         self.types.append(None)
@@ -272,62 +286,86 @@ class ObjectSheet(Sheet):
             base_name, wb_sheet, index, srv_writer, clt_writer)
 
     # 解析各字段的类型
-    def decode_type(self):
-        col = 2  # 类型所在列
-        empty_cnt = 0
-        for row_idx in range(2, self.wb_sheet.max_row + 1):
-            self.mark_error_pos(row_idx, col)
-            value = self.wb_sheet.cell(row=row_idx, column=col).value
+    def to_field_type(self, row, col):
+        self.mark_error_pos(row, col)
+        value = self.wb_sheet.cell(row=row, column=col).value
 
-            # 中间可能有些注释字段，但如果太多的话，可能是出错
-            if value == None:
-                empty_cnt = empty_cnt + 1
-                if empty_cnt > 32:
-                    # print("warning sheet %s has too many empty type" %
-                    #       self.wb_sheet.title)
-                    break
-            elif value not in TYPES:
-                self.raise_error("invalid type", value)
-
-            self.types.append(value)
-
-    # 导出客户端、服务端字段名(server、client)那一列
-    def decode_one_field(self, fields, col_idx):
-        for row_idx in range(OFLG_ROW + 1, len(self.types) + OFLG_ROW + 1):
-            value = self.wb_sheet.cell(row=row_idx, column=col_idx).value
-
-            # 对于不需要导出的field，可以为空。即value为None
-            fields.append(value)
-
-    # 导出客户端、服务端字段名(server、client)那一列
-    def decode_opt(self):
-        self.decode_one_field(self.srv_fields, OSRV_COL)
-        self.decode_one_field(self.clt_fields, OCLT_COL)
-
-    # 解析一个单元格内容
-    def decode_cell(self, row_idx):
-        value = self.wb_sheet.cell(row=row_idx, column=OCTX_COL).value
-        if None == value:
+        # 如果未指定类型，则表示后面的数据都不导出了
+        if value == None:
             return None
 
-        # 在object的结构中，数据是从第二行开始的，所以types的下标偏移2
-        self.mark_error_pos(row_idx, OCTX_COL)
-        return self.to_value(self.types[row_idx - OFLG_ROW - 1], value)
+        if not TYPES.get(value):
+            self.raise_error("invalid type", value)
+
+        return value
+
+    # 解析各字段的类型
+    def to_field_name(self, row, col):
+        self.mark_error_pos(row, col)
+        value = self.wb_sheet.cell(row=row, column=col).value
+        if value == None:
+            return None
+
+        return to_unicode_str(value)
+
+    # 导出选项：是导出服务端还是客户端
+    def to_field_opt(self, row, col):
+        self.mark_error_pos(row, col)
+        value = self.wb_sheet.cell(row=row, column=col).value
+
+        # 中间可能有些注释字段，不需要导出
+        if value == None:
+            return 0
+        # 服务器占第一位，客户端第二位
+        elif "s" == value:
+            return 1
+        elif "c" == value:
+            return 2
+        elif "sc" == value or "cs" == value:
+            return 3
+        else:
+            self.raise_error("invalid option", value)
+
+    # 解析一个字段信息，名字、类型、导出参数等
+    def decode_field(self):
+        col = 2  # 类型所在列
+        beg_row = 2
+
+        for row in range(beg_row, self.wb_sheet.max_row + 1):
+            f_type = self.to_field_type(row, col)
+            if not f_type:
+                break
+
+            f_opt = self.to_field_opt(row, col + 1)
+            f_name = self.to_field_name(row, col + 2)
+
+            self.fields.append(Field(f_type, f_opt, f_name))
+            print(f_type, f_opt, f_name)
 
     # 解析表格的所有内容
     def decode_ctx(self):
-        for row_idx in range(OFLG_ROW + 1, len(self.types) + OFLG_ROW + 1):
-            value = self.decode_cell(row_idx)
+        col = 5 # 数据所在列
+        beg_row = 2
+        for row in range(beg_row, len(self.fields) + beg_row):
+            # 第一行没数据，所以要做个偏移
+            field = self.fields[row - 2]
+            
+            # 不需要导出，可能是注释
+            opt = field.opt
+            if 0 == opt:
+                continue
+
+            self.mark_error_pos(row, col)
+            value = self.wb_sheet.cell(row=row, column=col).value
+            print("ctxxxxxxxx", row, field.name, value)
+            value = self.to_value(field.type, value)
+            # 空值，可能是没配置或者空lua表之类的
             if None == value:
                 continue
 
-            srv_key = self.srv_fields[row_idx - OFLG_ROW - 1]
-            clt_key = self.clt_fields[row_idx - OFLG_ROW - 1]
-
-            if srv_key:
-                self.srv_ctx[srv_key] = value
-            if clt_key:
-                self.clt_ctx[clt_key] = value
+            name = field.name
+            if opt & 0x1: self.srv_ctx[name] = value
+            if opt & 0x2: self.clt_ctx[name] = value
 
 
 class ExcelDoc:
@@ -341,16 +379,19 @@ class ExcelDoc:
         sheet_val = wb_sheet.cell(
             row=INDEX_ROW, column=INDEX_COL).value
 
+        if not isinstance(sheet_val, int):
+            return -2
+
         # 判断索引是否正确，-1表示kv模式，其他表示索引数量
-        if "-1" == sheet_val:
+        if -1 == sheet_val:
             return -1
-        elif sheet_val.isdigit():
-            index = int(sheet_val)
-            if index > 8:
+        elif sheet_val >= 0:
+            return -2
+            if sheet_val > 8:
                 print("sheet %s too many index, abort" %
                       wb_sheet.title.ljust(24, "."))
                 return -2
-            return index
+            return sheet_val
         else:
             return -2
 

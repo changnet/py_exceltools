@@ -4,22 +4,20 @@
 
 关于openpyxl库：https://pypi.python.org/pypi/openpyxl。
 
-目前仅在Python 3.9下测试
+目前仅在Python 3下测试
 
 ## 安装
 
 linux安装  
 
-    apt-get install python-pip
-    pip install six
-    pip install openpyxl
+    apt install python3-pip
+    pip3 install six
+    pip3 install openpyxl
     git clone https://github.com/changnet/py_exceltools.git
 
 ps:
-```
-"Cannot fetch index base URL http://pypi.python.org/simple/"  
-尝试：pip install openpyxl --index-url=https://pypi.python.org/simple/
-```
+
+部分linux发行版（如debian 10）同时带python2、python3两个版本，使用python、pip时要使用`python3`、`pip3`
 
 win安装
 
