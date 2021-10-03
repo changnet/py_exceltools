@@ -6,7 +6,6 @@ import re
 import sys
 import json
 import openpyxl
-import pathlib
 
 from slpp.slpp import slpp as lua
 
@@ -69,10 +68,7 @@ class Field(object):
 
 class Sheet(object):
 
-    def __init__(self, base_name, wb_sheet, index, srv_writer, clt_writer):
-        self.srv_writer = srv_writer
-        self.clt_writer = clt_writer
-
+    def __init__(self, base_name, wb_sheet, index):
         self.fields = []  # 各列字段名
         self.index = index  # 索引数量，0表示kv模式
 
@@ -188,52 +184,20 @@ class Sheet(object):
         self.decode_ctx()  # 解析内容
 
         print("    decode sheet %s done" % wb_sheet.title.ljust(24, "."))
-        return True
-
-    # 写入配置到文件
-    def write_one_file(self, ctx, base_path, writer):
-        # 有些配置可能只导出客户端或只导出服务器
-        if not any(ctx):
-            return
-
-        wt = writer(self.base_name, self.wb_sheet.title)
-
-        ctx = wt.context(ctx)
-        suffix = wt.suffix()
-
-        # 创建目录
-        dir_path = base_path
-        if self.dir_path: dir_path = dir_path + self.dir_path + "/"
-
-        pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
-
-        # 必须为wb，不然无法写入utf-8
-        path = dir_path + self.file_path + suffix
-        file = open(path, 'wb')
-        file.write(ctx.encode("utf-8"))
-        file.close()
-
-    # 分别写入到服务端、客户端的配置文件
-    def write_files(self, srv_path, clt_path):
-        if None != srv_path and None != self.srv_writer:
-            self.write_one_file(self.srv_ctx, srv_path, self.srv_writer)
-        if None != clt_path and None != self.clt_writer:
-            self.write_one_file(self.clt_ctx, clt_path, self.clt_writer)
 
 # 导出数组类型配置
 
 
 class ArraySheet(Sheet):
 
-    def __init__(self, base_name, wb_sheet, index, srv_writer, clt_writer):
+    def __init__(self, base_name, wb_sheet, index):
         self.index = index
 
         # 记录导出各行的内容
         self.srv_ctx = []
         self.clt_ctx = []
 
-        super(ArraySheet, self).__init__(
-            base_name, wb_sheet, index, srv_writer, clt_writer)
+        super(ArraySheet, self).__init__(base_name, wb_sheet, index)
 
     # 解析一个字段信息，名字、类型、导出参数等
     def decode_field(self):
@@ -287,13 +251,12 @@ class ArraySheet(Sheet):
 
 class ObjectSheet(Sheet):
 
-    def __init__(self, base_name, wb_sheet, index, srv_writer, clt_writer):
+    def __init__(self, base_name, wb_sheet, index):
         # 记录导出各行的内容
         self.srv_ctx = {}
         self.clt_ctx = {}
 
-        super(ObjectSheet, self).__init__(
-            base_name, wb_sheet, index, srv_writer, clt_writer)
+        super(ObjectSheet, self).__init__(base_name, wb_sheet, index)
 
     # 解析一个字段信息，名字、类型、导出参数等
     def decode_field(self):
@@ -338,9 +301,9 @@ class ObjectSheet(Sheet):
 
 class ExcelDoc:
 
-    def __init__(self, file, abspath):
+    def __init__(self, file, path):
         self.file = file
-        self.abspath = abspath
+        self.path = path
 
     # 是否需要解析
     def need_decode(self, wb_sheet):
@@ -361,11 +324,11 @@ class ExcelDoc:
         else:
             return -2
 
-    def decode(self, srv_path, clt_path, srv_writer, clt_writer):
+    def decode(self, srv_path, clt_path, SrvWriter, CltWriter):
         print("start decode %s ..." % self.file)
 
-        base_name = os.path.splitext(self.file)[0]  # 去除后缀
-        wb = openpyxl.load_workbook(self.abspath)
+        # base_name = os.path.splitext(self.file)[0]  # 去除后缀
+        wb = openpyxl.load_workbook(self.path)
 
         for wb_sheet in wb.worksheets:
             index = self.need_decode(wb_sheet)
@@ -374,11 +337,18 @@ class ExcelDoc:
                       wb_sheet.title.ljust(24, "."))
                 continue
             elif -1 == index:
-                sheet = ObjectSheet(base_name, wb_sheet,
-                                    index, srv_writer, clt_writer)
+                sheet = ObjectSheet(self.file, wb_sheet, index)
             else:
-                sheet = ArraySheet(base_name, wb_sheet, index,
-                                   srv_writer, clt_writer)
+                sheet = ArraySheet(self.file, wb_sheet, index)
 
-            if sheet.decode_sheet():
-                sheet.write_files(srv_path, clt_path)
+            sheet.decode_sheet()
+            if SrvWriter:
+                writer = SrvWriter(self.file, wb_sheet.title)
+                writer.write_to_file(sheet.srv_ctx,
+                    srv_path, sheet.dir_path, sheet.file_path)
+
+            if CltWriter:
+                writer = CltWriter(self.file, wb_sheet.title)
+                writer.write_to_file(sheet.clt_ctx,
+                    clt_path, sheet.dir_path, sheet.file_path)
+

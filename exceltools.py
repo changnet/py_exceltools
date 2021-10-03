@@ -86,6 +86,80 @@ class Reader:
                    self.clt_path, self.srv_writer, self.clt_writer)
 
 
+# 该文件是否需要处理
+# @file 文件名
+# @path 完整的文件路径
+# @timeout 仅导出修改时间在N秒内的文件
+def need(file, path, timeout):
+    if not os.path.isfile(path):
+        return False
+    # ~开头的excel文件是临时文件
+    # linux下wps临时文件以.~开头
+    # 永中office是$开头
+    # 这些文件都忽略掉
+    if file.startswith("~") \
+            or file.startswith(".") or file.startswith("$"):
+        return False
+
+    # 目前仅检测两种常用的excel文件，以后有需要再加
+    if not file.endswith(".xlsx") and not file.endswith(".xlsm"):
+        return False
+
+    # 按修改时间导出
+    if timeout > 0:
+        mtime = os.path.getmtime(path)
+
+        if time.time() - mtime > timeout:
+            return False
+
+    return True
+
+# 开始处理单个excel文件
+def do_one_excel(file, path, srv_path, clt_path, timeout, SrvWriter, CltWriter):
+    if not need(file, path, timeout): return False
+
+    doc = ExcelDoc(file, path)
+    doc.decode(srv_path, clt_path, SrvWriter, CltWriter)
+    return True
+
+# 开始执行excel转换
+# @input_path:excel文件所在目录
+# @srv_path  :server输出目录
+# @clt_path  :客户端输出目录
+# @timeout   :只处理文档最后更改时间在N秒内的文档
+def do_excel_tools(input_path,
+                 srv_path, clt_path, timeout, srv_writer, clt_writer):
+
+    if timeout > 0:
+        print("read excel files from %s modified \
+            within %d seconds" % (input_path, timeout))
+    else:
+        print("read excel files from %s" % (input_path))
+
+    # 如果导出的前后端目录不存在，则创建
+    if None != srv_path and not os.path.exists(srv_path):
+        os.makedirs(srv_path)
+    if None != clt_path and not os.path.exists(clt_path):
+        os.makedirs(clt_path)
+
+    SrvWriter = None
+    CltWriter = None
+    # json则对应的类为JsonWriter
+    if None != srv_writer:
+        SrvWriter = eval(srv_writer.capitalize() + "Writer")
+    if None != clt_writer:
+        CltWriter = eval(clt_writer.capitalize() + "Writer")
+
+    count = 0
+    now = time.time()
+    file_list = os.listdir(input_path)
+    for file in file_list:
+        path = os.path.join(input_path, file)
+        if do_one_excel(file, path, srv_path, clt_path, timeout, SrvWriter, CltWriter):
+            count = count + 1
+
+    print("done,%d files, %d seconds elapsed" % (count, time.time() - now))
+
 if __name__ == '__main__':
 
     parser = OptionParser()
@@ -100,9 +174,6 @@ if __name__ == '__main__':
     parser.add_option("-t", "--timeout", dest="timeout", type="int",
                       default="-1",
                       help="only converte files modified within seconds")
-    parser.add_option("-f", "--suffix", dest="suffix",
-                      default="",
-                      help="what type of file will be readed.empty mean all files")
     parser.add_option("-w", "--swriter", dest="srv_writer",
                       help="which server writer you wish to use:lua xml json")
     parser.add_option("-l", "--cwriter", dest="clt_writer",
@@ -110,7 +181,6 @@ if __name__ == '__main__':
 
     options, args = parser.parse_args()
 
-    reader = Reader(options.input_path, options.srv_path, options.clt_path,
-                    options.timeout, options.suffix, options.srv_writer, options.clt_writer)
-    reader.attention()
-    reader.read()
+    do_excel_tools(options.input_path, options.srv_path, options.clt_path,
+                    options.timeout, options.srv_writer, options.clt_writer)
+
