@@ -43,21 +43,19 @@ win安装
     注：对于client和server，如果未配置输出目录或转换器，则不会导出。
 
 # 数据类型
-    支持int(int64)、number(float)、string、json、lua
+    支持num(double、int64)、str、json、lua
 
 # 打包exe
 部署时，可以将python打包成exe，生成的文件参考bin目录。
 
     pip install pyinstaller
-    pyinstaller -F -c reader.py
+    pyinstaller -F -c exceltools.py
 
 # 建议
-* 文件命名支持 mmm_nnn.xlsx的方式。mmm可以是任意字符，nnn只能是数字和字母，导出的配置以
-nnn做为前缀，当然也可以只用nnn.xlsx。例如:Y_样本_example.xlsx，方便管理文件
 * 在string中无法直接使用换行等特殊称号。请用\n等转义字符替代。
 * 设置表结构时，数据尽量偏平化。例如一个玩家身上有8种装备，不应该配8个表，而是在装备表中加一个字段pos
 * 由于xml并不存在数组等结构，不建议使用。
-* 工具会检测server和client标识。如果不存在，则不导出些表。方便策划做备注
+* 工具会检测导出标识。如果不存在，则不导出些表。方便策划做备注
 
 # 二次开发
 如果需要新增加导出的格式（例如生成js、typescript，甚至自定义格式的txt），则参考writer.py中json、xml、lua的实现一个writer即可

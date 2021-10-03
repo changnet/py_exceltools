@@ -12,6 +12,24 @@ BASE_LENGTH = 60
 BASE_INDENT = "    "
 INDENT_LIST = {}
 
+# 把一个dict的key转为字符串
+def to_str_key_dict(d, prefix):
+    if not isinstance(d, dict): return d
+
+    found = False
+    for k, v in d.items():
+        if not isinstance(k, str):
+            found = True
+            break
+
+    if not found: return d
+
+    new_d = {}
+    for k, v in d.items():
+        # xml中不允许数字key <1></1> 这种是不允许的，但前面加前缀后可以
+        new_d[prefix + str(k)] = to_str_key_dict(v, prefix)
+
+    return new_d
 
 class Writer(object):
     def __init__(self, doc_name, sheet_name):
@@ -23,20 +41,20 @@ class Writer(object):
     # 文件后缀
     def suffix(self):
         pass
-    # 文件内容
 
+    # 文件内容
     def context(self, ctx):
         pass
-    # 注释开始
 
+    # 注释开始
     def comment_start(self):
         pass
-    # 注释结束
 
+    # 注释结束
     def comment_end(self):
         pass
-    # 文件注释(千万不要加时间，影响svn)
 
+    # 文件注释(千万不要加时间，影响svn)
     def comment(self):
         where = format("%s %s" % (self.doc_name, self.sheet_name))
         comment = [
@@ -53,7 +71,7 @@ class Writer(object):
     # 写入配置到文件
     def write_to_file(self, ctx, base_path, sub_path, file_name):
         # 有些配置可能只导出客户端或只导出服务器
-        if not base_path or not any(ctx):
+        if not base_path or not ctx or not any(ctx):
             return
 
         ctx = self.context(ctx)
@@ -155,6 +173,9 @@ class XmlWriter(Writer):
 
     # 文件内容
     def context(self, ctx):
+        # xml的节点不能以数字作key，也不会强转，这里进行转换
+        ctx = to_str_key_dict(ctx, "item")
+
         # 创建DOM文档对象
         self.doc = Document()
         root = self.root_element()
@@ -162,7 +183,9 @@ class XmlWriter(Writer):
         self.to_xml(root, ctx)
         self.doc.appendChild(root)
 
-        return self.comment() + self.doc.toprettyxml(indent="   ")
+        # 有些xml库支持注释，但大多数是不支持的
+        # return self.comment() + self.doc.toprettyxml(indent="   ")
+        return self.doc.toprettyxml(indent="   ")
 
 
 class LuaWriter(Writer):

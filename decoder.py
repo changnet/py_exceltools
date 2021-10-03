@@ -68,13 +68,13 @@ class Field(object):
 
 class Sheet(object):
 
-    def __init__(self, base_name, wb_sheet, index):
+    def __init__(self, base_name, wb_sheet):
         self.fields = []  # 各列字段名
-        self.index = index  # 索引数量，0表示kv模式
 
         self.wb_sheet = wb_sheet
         self.base_name = base_name
 
+        self.index = -1  # 索引数量，-1表示kv模式
         self.dir_path = None  # 导出目录
         self.file_path = None  # 导出文件名
 
@@ -170,6 +170,8 @@ class Sheet(object):
     def decode_info(self):
         row = 1
         col = 1
+        self.index = self.wb_sheet.cell(
+            row = row, column = col).value
         self.dir_path = self.wb_sheet.cell(
             row = row, column = col + 1).value
         self.file_path = self.wb_sheet.cell(
@@ -190,20 +192,19 @@ class Sheet(object):
 
 class ArraySheet(Sheet):
 
-    def __init__(self, base_name, wb_sheet, index):
-        self.index = index
-
+    def __init__(self, base_name, wb_sheet):
         # 记录导出各行的内容
-        self.srv_ctx = []
-        self.clt_ctx = []
+        self.srv_ctx = None
+        self.clt_ctx = None
 
-        super(ArraySheet, self).__init__(base_name, wb_sheet, index)
+        super(ArraySheet, self).__init__(base_name, wb_sheet)
 
     # 解析一个字段信息，名字、类型、导出参数等
     def decode_field(self):
         row = 3
         beg_col = 1
 
+        has = set()
         for col in range(beg_col, self.wb_sheet.max_column + 1):
             f_type = self.to_field_type(row, col)
             if not f_type:
@@ -211,6 +212,8 @@ class ArraySheet(Sheet):
 
             f_opt = self.to_field_opt(row + 1, col)
             f_name = self.to_field_name(row + 2, col)
+            if f_name in has:
+                self.raise_error("field name dumplicate", f_name)
 
             self.fields.append(Field(f_type, f_opt, f_name))
 
@@ -227,8 +230,44 @@ class ArraySheet(Sheet):
 
         return srv_row, clt_row  # 返回一个tuple
 
+    # 生成第N层索引数据
+    def make_index(self, ctx, i, max_i):
+        name = self.fields[i].name
+
+        index_ctx = {}
+        for v in ctx:
+            val = v.get(name)
+            if not val:
+                self.raise_error("index no value set", name)
+
+            # 如果使用了索引，则索引得到的内容必须是唯一的
+            old = index_ctx.get(val)
+            if i >= max_i:
+                if old:
+                    self.raise_error(
+                        "dumplicate index value", name + ": " + str(val))
+                else:
+                    index_ctx[val] = v
+            else:
+                # 还不是最后一层索引，存到一个数组等后续处理
+                if not old:
+                    old = []
+                    index_ctx[val] = old
+                old.append(v)
+
+        if i < max_i:
+            new_ctx = {}
+            for k, v in index_ctx.items():
+                new_ctx[k] = self.make_index(v, i + 1, max_i)
+
+            return new_ctx
+        else:
+            return index_ctx
+
     # 解析导出的内容
     def decode_ctx(self):
+        srv_ctx = []
+        clt_ctx = []
         # 前面几行分别是：基础信息、注释、类型、选项、字段名
         beg_row = 6
         for row in range(beg_row, self.wb_sheet.max_row + 1):
@@ -238,31 +277,45 @@ class ArraySheet(Sheet):
             # 不为空才追加
             if any(srv_row):
                 has = True
-                self.srv_ctx.append(srv_row)
+                srv_ctx.append(srv_row)
             if any(clt_row):
                 has = True
-                self.clt_ctx.append(clt_row)
+                clt_ctx.append(clt_row)
 
             # 遇到空行后面的不再导出
             if not has: break
+
+        self.error_val = None
+        if self.index > 0:
+            if self.index > len(self.fields):
+                self.raise_error("index lager than field count", self.index)
+
+            if len(srv_ctx) > 0:
+                self.srv_ctx = self.make_index(srv_ctx, 0, self.index - 1)
+            if len(clt_ctx) > 0:
+                self.clt_ctx = self.make_index(clt_ctx, 0, self.index - 1)
+        else:
+            self.srv_ctx = srv_ctx
+            self.clt_ctx = clt_ctx
 
 # 导出object类型的结构
 
 
 class ObjectSheet(Sheet):
 
-    def __init__(self, base_name, wb_sheet, index):
+    def __init__(self, base_name, wb_sheet):
         # 记录导出各行的内容
         self.srv_ctx = {}
         self.clt_ctx = {}
 
-        super(ObjectSheet, self).__init__(base_name, wb_sheet, index)
+        super(ObjectSheet, self).__init__(base_name, wb_sheet)
 
     # 解析一个字段信息，名字、类型、导出参数等
     def decode_field(self):
         col = 2  # 类型所在列
         beg_row = 2
 
+        has = set()
         for row in range(beg_row, self.wb_sheet.max_row + 1):
             f_type = self.to_field_type(row, col)
             if not f_type:
@@ -270,6 +323,8 @@ class ObjectSheet(Sheet):
 
             f_opt = self.to_field_opt(row, col + 1)
             f_name = self.to_field_name(row, col + 2)
+            if f_name in has:
+                self.raise_error("field name dumplicate", f_name)
 
             self.fields.append(Field(f_type, f_opt, f_name))
 
@@ -337,9 +392,9 @@ class ExcelDoc:
                       wb_sheet.title.ljust(24, "."))
                 continue
             elif -1 == index:
-                sheet = ObjectSheet(self.file, wb_sheet, index)
+                sheet = ObjectSheet(self.file, wb_sheet)
             else:
-                sheet = ArraySheet(self.file, wb_sheet, index)
+                sheet = ArraySheet(self.file, wb_sheet)
 
             sheet.decode_sheet()
             if SrvWriter:
