@@ -125,6 +125,7 @@ class Sheet(object):
         self.mark_error_pos(row, col)
         value = self.wb_sheet.cell(row=row, column=col).value
         if value == None:
+            self.raise_error("field name not set")
             return None
 
         return to_unicode_str(value)
@@ -185,8 +186,6 @@ class Sheet(object):
         self.decode_field()  # 解析字段类型、导出参数，是否导出服务端、客户端
         self.decode_ctx()  # 解析内容
 
-        print("    decode sheet %s done" % wb_sheet.title.ljust(24, "."))
-
 # 导出数组类型配置
 
 
@@ -237,7 +236,7 @@ class ArraySheet(Sheet):
         index_ctx = {}
         for v in ctx:
             val = v.get(name)
-            if not val:
+            if None == val:
                 self.raise_error("index no value set", name)
 
             # 如果使用了索引，则索引得到的内容必须是唯一的
@@ -388,7 +387,7 @@ class ExcelDoc:
         for wb_sheet in wb.worksheets:
             index = self.need_decode(wb_sheet)
             if index < -1:
-                print("    sheet %s no need to decode,abort" %
+                print("    sheet %s no need to decode, ignore" %
                       wb_sheet.title.ljust(24, "."))
                 continue
             elif -1 == index:
@@ -406,4 +405,6 @@ class ExcelDoc:
                 writer = CltWriter(self.file, wb_sheet.title)
                 writer.write_to_file(sheet.clt_ctx,
                     clt_path, sheet.dir_path, sheet.file_path)
+
+            print("    decode sheet %s done" % wb_sheet.title.ljust(24, "."))
 
