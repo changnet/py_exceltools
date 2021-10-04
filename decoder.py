@@ -202,7 +202,7 @@ class ArraySheet(Sheet):
     # 解析一个字段信息，名字、类型、导出参数等
     def decode_field(self):
         row = 3
-        beg_col = 1
+        beg_col = 2
 
         has = set()
         for col in range(beg_col, self.wb_sheet.max_column + 1):
@@ -223,9 +223,9 @@ class ArraySheet(Sheet):
         clt_row = {}
 
         # 第一列没数据，从第二列开始解析
-        beg_col = 1
+        beg_col = 2
         for col in range(beg_col, len(self.fields) + beg_col):
-            field = self.fields[col - 1]
+            field = self.fields[col - beg_col]
             self.to_field_value(srv_row, clt_row, field, row, col)
 
         return srv_row, clt_row  # 返回一个tuple
@@ -334,7 +334,7 @@ class ObjectSheet(Sheet):
         beg_row = 2
         for row in range(beg_row, len(self.fields) + beg_row):
             # 第一行没数据，-1.数组下标从0开始，但excel坐标从1开始，再-1
-            field = self.fields[row - 2]
+            field = self.fields[row - beg_row]
             
             # 不需要导出，可能是注释
             opt = field.opt
